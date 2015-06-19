@@ -1,6 +1,6 @@
 
 REBAR = ~/local/bin/rebar
-ERL = erl -pa ebin -pa deps/exml/ebin -pa deps/expellee/ebin -pa deps/ranch/ebin
+ERL = erl -pa ebin -pa deps/exml/ebin -pa deps/expellee/ebin -pa deps/ranch/ebin -pa deps/eper/ebin
 DIALYZE_SH = dialysis/dialyze.sh
 RM = rm -f
 
