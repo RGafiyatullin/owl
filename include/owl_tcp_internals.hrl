@@ -37,5 +37,6 @@
 -define( send_stream_open( StreamAttrs ), { send_stream_open, StreamAttrs } ).
 -define( send_stanza( Stanza ), { send_stanza, Stanza } ).
 -define( set_active( Mode ), { set_active, Mode } ).
+-define( send_stream_close(), send_stream_close ).
 
 -endif. % owl_include_owl_tcp_internals_hrl

@@ -158,6 +158,9 @@ handle_call( ?send_stream_open( StreamAttrs ), ReplyTo, S = #s{} ) ->
 handle_call( ?send_stanza( Stanza ), ReplyTo, S ) ->
 	handle_call_send_stanza( Stanza, ReplyTo, S );
 
+handle_call( ?send_stream_close(), ReplyTo, S ) ->
+	handle_call_send_stream_close( ReplyTo, S );
+
 handle_call( Unexpected, ReplyTo, S = #s{} ) ->
 	?log(warning, [ ?MODULE, handle_call, {unexpected_request, Unexpected}, {reply_to, ReplyTo} ]),
 	{reply, badarg, S, ?hib_timeout( S )}.
@@ -261,6 +264,23 @@ handle_call_send_stanza(
 			{ok, S3} = do_socket_flush( S2 ),
 			{reply, ok, S3, ?hib_timeout(S3)}
 	end.
+
+handle_call_send_stream_close( ReplyTo, S0 = #s{ xml_stanza_render_ctx = StanzaRenderCtx0, xml_stream_fqn = {StreamNS, StreamNCN} } ) ->
+	?log( debug, [ ?MODULE, handle_call_send_stream_close ] ),
+	case StanzaRenderCtx0 of
+		undefined ->
+			{reply, {error, no_stream}, S0, ?hib_timeout(S0)};
+		_Defined ->
+			_ = gen_server:reply( ReplyTo, ok ),
+
+			{ CloseTagIOL, _ } = exp_render_stream:node_close_tag( StreamNS, StreamNCN, StanzaRenderCtx0 ),
+			{ok, S1} = do_socket_write( CloseTagIOL, S0 #s{ xml_stanza_render_ctx = undefined }),
+			{ok, S2} = do_socket_flush( S1 ),
+			{ok, S3} = do_reply_to_all_passive_receivers( {error, closed}, S2 ),
+			{ok, S4} = do_mark_shutdown( S3 ),
+			{noreply, S4, ?hib_timeout( S4 )}
+	end.
+
 
 
 

@@ -9,4 +9,5 @@ t1_test() ->
 	{ok, Owl} = owl_tcp:start_link( tcp_connect, "localhost", 5222, [] ),
 	ok = owl_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ] ),
 	ok = owl_tcp:set_active( Owl, true ),
+	ok = owl_tcp:send_stream_close( Owl ),
 	{ok, Owl}.
