@@ -1,5 +1,5 @@
--ifndef(owl_include_owl_tcp_internals_hrl).
--define(owl_include_owl_tcp_internals_hrl, true).
+-ifndef(owl_include_owl_stream_tcp_internals_hrl).
+-define(owl_include_owl_stream_tcp_internals_hrl, true).
 
 -type queue_t( T ) :: queue:queue( T ).
 -define( queue, queue ).
@@ -28,15 +28,14 @@
 		inet:port_number(),
 		[ gen_tcp_connect_option() ]}.
 
-
-
 -define( match_tag_closed( TagClosed ), {_, TagClosed, _} ).
 -define( match_tag_ok( TagOk ), {TagOk, _, _} ).
 -define( match_tag_error( TagError ), {_, _, TagError} ).
 
+-define( controlling_process( Old, New ), {controlling_process, Old, New}).
 -define( send_stream_open( StreamAttrs ), { send_stream_open, StreamAttrs } ).
 -define( send_stanza( Stanza ), { send_stanza, Stanza } ).
 -define( set_active( Mode ), { set_active, Mode } ).
 -define( send_stream_close(), send_stream_close ).
 
--endif. % owl_include_owl_tcp_internals_hrl
+-endif. % owl_include_owl_stream_tcp_internals_hrl

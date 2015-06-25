@@ -15,7 +15,7 @@ is_stanza_stream_features( Xml ) ->
 -spec get_feature( xml_ns(), xml_ncname(), xml_element() ) -> error | {ok, xml_element()}.
 get_feature( NS, NCN, StreamFeatures ) ->
 	true = is_stanza_stream_features( StreamFeatures ),
-	Features = exp_node:chs( StreamFeatures ),
+	Features = exp_node_children:get( StreamFeatures ),
 	case lists:filter( fun( Feature ) ->
 			exp_node:fqn( Feature ) == {NS, NCN}
 		end, Features )

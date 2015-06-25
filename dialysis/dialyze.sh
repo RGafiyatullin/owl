@@ -4,7 +4,9 @@ CORE_APPS=" \
 erts kernel stdlib \
 common_test eunit \
 compiler syntax_tools \
-xmerl edoc\
+xmerl edoc \
+ssl crypto \
+tools runtime_tools \
 "
 CORE_PLT="$(dirname $0)/core.plt"
 

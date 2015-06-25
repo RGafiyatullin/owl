@@ -34,7 +34,8 @@ parse_stanza( Xml ) ->
 			Attrs = exp_node_attrs:attrs( Xml ),
 			FlatText = exp_text:text_flat( Xml ),
 			case maybe_b64_decode( FlatText ) of
-				undefined -> {error, {badarg, non_base64_text}};
+				undefined ->
+					{ok, NCN, Attrs, FlatText};
 				Packed ->
 					PayloadValues = binary:split( Packed, [<<0>>], [global] ),
 					{ok, NCN, Attrs, PayloadValues}
@@ -52,7 +53,7 @@ feature_mechanisms_has_mech( MechNameSought, SaslFeature ) ->
 			{?ns_xmpp_sasl, <<"mechanism">>} == exp_node:fqn( MaybeMech )
 			andalso
 			exp_text:text_flat( MaybeMech ) == MechNameSought
-		end, exp_node:chs( SaslFeature ) ).
+		end, exp_node_children:get( SaslFeature ) ).
 
 
 

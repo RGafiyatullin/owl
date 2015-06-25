@@ -1,4 +1,4 @@
--module (owl_tcp).
+-module (owl_stream_tcp).
 -compile ({parse_transform, gin}).
 -export ([
 		start_link/4, start_link/5,
@@ -8,12 +8,14 @@
 		set_active/2, set_active/3,
 		send_stream_close/1, send_stream_close/2,
 
-		receive_xmpp_event/2, receive_xmpp_event/1
+		receive_xmpp_event/1, receive_xmpp_event/2,
+
+		controlling_process/2, controlling_process/3
 	]).
 
 -include_lib("expellee/include/xml.hrl").
 
--include("owl_tcp_internals.hrl").
+-include("owl_stream_tcp_internals.hrl").
 -include("xmpp_stream_events.hrl").
 
 -define( gd_is_srv( OwlTcpSrv ), ( is_pid( OwlTcpSrv ) orelse is_atom( OwlTcpSrv ) ) ).
@@ -25,6 +27,7 @@
 -define( set_active_timeout, 5000 ).
 -define( receive_xmpp_event_timeout, 5000 ).
 -define( send_stream_close_timeout, 5000 ).
+-define( controlling_process_timeout, 5000 ).
 
 start_link( tcp_connect, Host, Port, XmppTcpOpts ) ->
 	start_link( tcp_connect, Host, Port, [], XmppTcpOpts ).
@@ -35,7 +38,7 @@ start_link( tcp_connect, Host, Port, TcpOpts, XmppTcpOpts )
 	andalso ?gd_is_port_number( Port )
 ->
 	ControllingProcess = proplists:get_value( controlling_process, XmppTcpOpts, self() ),
-	owl_tcp_srv:start_link( ControllingProcess, {tcp_endpoint, Host, Port, TcpOpts}, XmppTcpOpts ).
+	owl_stream_tcp_srv:start_link( ControllingProcess, {tcp_endpoint, Host, Port, TcpOpts}, XmppTcpOpts ).
 
 receive_xmpp_event( Xmpp ) ->
 	receive_xmpp_event( Xmpp, ?receive_xmpp_event_timeout ).
@@ -51,6 +54,12 @@ receive_xmpp_event( Xmpp, Timeout ) ->
 		Timeout -> {error, timeout}
 	end.
 
+
+controlling_process( OwlTcpSrv, NewControllingProcess ) ->
+	controlling_process( OwlTcpSrv, NewControllingProcess, ?controlling_process_timeout ).
+controlling_process( OwlTcpSrv, NewControllingProcess, Timeout ) when ?gd_is_srv( OwlTcpSrv ) andalso is_pid( NewControllingProcess ) ->
+	OldControllingProcess = self(),
+	gen_server:call( OwlTcpSrv, ?controlling_process( OldControllingProcess, NewControllingProcess ), Timeout ).
 
 send_stream_open( OwlTcpSrv, StreamAttrs ) ->
 	send_stream_open( OwlTcpSrv, StreamAttrs, ?send_stream_open_timeout ).

@@ -10,6 +10,8 @@
 -define( xmpp_stream_close( Xmpp ), {xmpp_stream_close, Xmpp} ).
 -define( xmpp_stanza( Xmpp, Stanza ), {xmpp_stanza, Xmpp, Stanza} ).
 
+-define( xmpp_control_handed_over( Xmpp ), {xmpp_control_handed_over, Xmpp} ).
+
 -type xmpp_stream_event() ::
 	  ?xmpp_closed( pid() )
 	| ?xmpp_socket_error( pid(), atom() )

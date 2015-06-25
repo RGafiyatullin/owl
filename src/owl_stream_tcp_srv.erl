@@ -1,4 +1,4 @@
--module (owl_tcp_srv).
+-module (owl_stream_tcp_srv).
 -compile ({parse_transform, gin}).
 -behaviour (gen_server).
 
@@ -21,7 +21,7 @@
 -include_lib ("expellee/include/xml.hrl").
 -include_lib ("expellee/include/sax.hrl").
 
--include ("owl_tcp_internals.hrl").
+-include ("owl_stream_tcp_internals.hrl").
 
 -include ("log.hrl").
 -include ("ns_xmpp_core.hrl").
@@ -86,6 +86,8 @@ start_link( ControllingProcess, InitFrom, XmppTcpOpts, StartLinkTimeout ) ->
 
 		controlling_process :: pid(),
 		controlling_process_monref :: reference(),
+		heir_process :: pid(),
+
 		hibernate_timeout :: infinity | non_neg_integer(),
 
 		xml_stream_fqn :: undefined | { binary(), binary() },
@@ -149,6 +151,9 @@ enter_loop_with_tcp_endpoint( ControllingProcess, XmppTcpOpts, TcpEndpointHost, 
 
 init( {} ) -> {stop, enter_loop_used}.
 
+handle_call( ?controlling_process( Old, New ), ReplyTo, S ) ->
+	handle_call_controlling_process( Old, New, ReplyTo, S );
+
 handle_call( ?set_active( Mode ), ReplyTo, S = #s{} ) ->
 	handle_call_set_active( Mode, ReplyTo, S );
 
@@ -168,6 +173,10 @@ handle_call( Unexpected, ReplyTo, S = #s{} ) ->
 handle_cast( Unexpected, S = #s{} ) ->
 	?log(warning, [ ?MODULE, handle_cast, {unexpected_request, Unexpected} ]),
 	{noreply, S, ?hib_timeout( S )}.
+
+handle_info( timeout, S ) ->
+	?log(debug, [ ?MODULE, handle_info_timeout, hibernating ]),
+	{noreply, S, hibernate};
 
 handle_info( {'DOWN', MonRef, process, ControllingProcess, Reason}, State = #s{ controlling_process = ControllingProcess, controlling_process_monref = MonRef } ) ->
 	handle_info_controlling_process_down( Reason, State );
@@ -229,6 +238,24 @@ handle_call_set_active( IsActiveNew, ReplyTo, S0 = #s{ is_active = IsActiveOld }
 			{noreply, S2, ?hib_timeout(S2)}
 	end.
 
+handle_call_controlling_process(
+	Old, New, _ReplyTo,
+	S0 = #s{
+		controlling_process = CurrentControllingProcess
+	}
+) ->
+	case Old == CurrentControllingProcess of
+		false ->
+			{reply, {error, not_owner}, S0};
+		true ->
+			{ok, S1} = do_uninstall_monitor_for_controlling_process( S0 ),
+			{ok, S2} = do_install_monitor_for_controlling_process( S1 #s{ controlling_process = New } ),
+
+			_ = erlang:send( New, ?xmpp_control_handed_over( self() ) ),
+
+			{reply, ok, S2}
+	end.
+
 handle_call_send_stream_open(
 	StreamAttrs, _ReplyTo,
 	S0 = #s{
@@ -241,7 +268,7 @@ handle_call_send_stream_open(
 	?log( debug, [?MODULE, handle_call_send_stream_open, {stream_attrs, StreamAttrs}] ),
 	{OpenTagIOL, StanzaRenderCtx} = exp_render_stream:node_open_tag( StreamNS, StreamNCN, StreamAttrs, StreamRenderCtx ),
 	S1 = S0 #s{ xml_stanza_render_ctx = StanzaRenderCtx },
-	{ok, S2} = do_socket_write( OpenTagIOL, S1 ),
+	{ok, S2} = do_socket_write( [ <<"<?xml version='1.0'?>">>, OpenTagIOL], S1 ),
 	{ok, S3} = do_socket_flush( S2 ),
 	{ok, S4} = do_destroy_xml_parser_context( S3 ),
 	{ok, S5} = do_initialize_xml_parser_context( XmppTcpOpts, S4 ),
@@ -415,7 +442,7 @@ do_call_sax_parse( Data, S0 = #s{ xml_stream_parse_sax = Sax0, xml_stream_parse_
 		{error, ParseError, Sax1} ->
 			?log(info, [ ?MODULE, do_call_sax_parse, {parse_error, ParseError} ]),
 
-			S1 = S0 #s{ xml_stream_parse_sax = Sax1 }, %% WHY?!?! owl_tcp_srv.erl:387: The attempt to match a term of type exp_parse_sax:sax() against the variable Sax1 breaks the opaqueness of the term
+			S1 = S0 #s{ xml_stream_parse_sax = Sax1 }, %% WHY?!?! owl_stream_tcp_srv.erl:418: The attempt to match a term of type exp_parse_sax:sax() against the variable Sax1 breaks the opaqueness of the term
 
 			Event = ?xmpp_error( self(), peer, true, {parse_error, ParseError}, [] ),
 			{ok, S2} = do_enqueue_stream_event( Event, S1 ),
@@ -469,6 +496,11 @@ do_initialize_xml_parser_context( _XmppTcpOpts, S0 ) ->
 do_initialize_transport( _XmppTcpOpts, S0 = #s{ ranch_transport = TransportMod } ) ->
 	RanchMessages = TransportMod:messages(),
 	S1 = S0 #s{ ranch_messages = RanchMessages },
+	{ok, S1}.
+
+do_uninstall_monitor_for_controlling_process( S0 = #s{ controlling_process_monref = MonRef } ) ->
+	_ = erlang:demonitor( MonRef, [flush] ),
+	S1 = S0 #s{ controlling_process_monref = undefined },
 	{ok, S1}.
 
 do_install_monitor_for_controlling_process( S0 = #s{ controlling_process = ControllingProcess } ) ->
