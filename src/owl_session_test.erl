@@ -34,7 +34,7 @@ t1_test() ->
 														session, owl_session_service_session, [])),
 	{ok, _PresenceService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
 														presence, owl_session_service_presence, [])),
-	{ok, _MucClientService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
+	{ok, MucClientService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
 														muc_client, owl_session_service_muc_client, [])),
 	{ok, _IQHandlerService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
 														iq, owl_session_service_iq_handler, [])),
@@ -43,6 +43,8 @@ t1_test() ->
 
 	?assertMatch( ok, owl_stream_tcp:controlling_process( StreamSrv, SessionSrv ) ),
 	?assertMatch( ok, owl_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, <<"admin.localhost">>} ] ) ),
+
+	?assertMatch( MucClientService, owl_session_service:query_facility( MucClientService, muc_client ) ),
 
 	ok.
 

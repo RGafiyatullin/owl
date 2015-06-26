@@ -23,9 +23,13 @@
 
 -define(args( Args ), Args ).
 
+-define( muc_join( OccupantJid, ReqPresence ), {muc_join, OccupantJid, ReqPresence} ).
+-define( muc_leave( OccupantJid, ReqPresence ), {muc_leave, OccupantJid, ReqPresence} ).
+
 facilities_required( ?args( _ ) ) ->
 	{ok, [
-			{presence, current_presence, 60000}
+			{presence, current_presence, 60000},
+			{bind, bound_to_jid, 60000}
 		]}.
 stream_features_required( ?args( _ ) ) -> {ok, []}.
 
