@@ -442,7 +442,7 @@ do_call_sax_parse( Data, S0 = #s{ xml_stream_parse_sax = Sax0, xml_stream_parse_
 		{error, ParseError, Sax1} ->
 			?log(info, [ ?MODULE, do_call_sax_parse, {parse_error, ParseError} ]),
 
-			S1 = S0 #s{ xml_stream_parse_sax = Sax1 }, %% WHY?!?! owl_stream_tcp_srv.erl:418: The attempt to match a term of type exp_parse_sax:sax() against the variable Sax1 breaks the opaqueness of the term
+			S1 = S0 #s{ xml_stream_parse_sax = Sax1 }, %% WHY?!?! owl_stream_tcp_srv.erl:445: The attempt to match a term of type exp_parse_sax:sax() against the variable Sax1 breaks the opaqueness of the term
 
 			Event = ?xmpp_error( self(), peer, true, {parse_error, ParseError}, [] ),
 			{ok, S2} = do_enqueue_stream_event( Event, S1 ),

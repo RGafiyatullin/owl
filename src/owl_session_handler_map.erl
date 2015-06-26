@@ -118,7 +118,7 @@ get_recepients_loop( StanzaProps = {_, _, _, _}, {ToTrigger, Count, ToKeep}, [ H
 		end,
 	get_recepients_loop( StanzaProps, NextState, HandlersToCheck ).
 
--spec check_handler( { xml_ns(), xml_ncname(), undefined | binary() }, #h{} ) -> { DoesMatch :: boolean(), ShouldKeep :: boolean() }.
+-spec check_handler( { xml_ns(), xml_ncname(), undefined | binary(), [ fun( (xml_element()) -> boolean() ) ] }, #h{} ) -> { DoesMatch :: boolean(), ShouldKeep :: boolean() }.
 check_handler( StanzaProps, #h{ match = Match, single_shot = SingleShot, predicates = Predicates } ) ->
 	case {StanzaProps, Match} of
  		{ {NS, NCN, DefinedID, Stanza}, {fqn_and_id, NS, NCN, DefinedID} } ->
