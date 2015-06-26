@@ -105,7 +105,7 @@ stanza_new( Err, RequestStanza ) ->
 		end,
 
 	ErrorSubElement =
-		exp_node:new( {?ns_jabber_streams, <<"error">>}, [], [
+		exp_node:new( {?ns_jabber_client, <<"error">>}, [], [
 			ConditionChild
 			| XmlChildren1
 		] ),

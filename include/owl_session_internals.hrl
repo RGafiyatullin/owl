@@ -1,8 +1,8 @@
 -ifndef( owl_include_owl_session_iternals_hrl ).
 -define( owl_include_owl_session_iternals_hrl, true ).
 
--define( subscribe( MatchSpec, HandlerPid, Priority, TriggerTimeout ),
-			{subscribe, MatchSpec, HandlerPid, Priority, TriggerTimeout} ).
+-define( subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout ),
+			{subscribe, MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout} ).
 -define( unsubscribe( HandlerID ), {unsubscribe, HandlerID} ).
 
 -define( add_service( ServiceID, ServiceMod, ServiceArgs ), {add_service, ServiceID, ServiceMod, ServiceArgs} ).

@@ -34,6 +34,10 @@ t1_test() ->
 														session, owl_session_service_session, [])),
 	{ok, _PresenceService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
 														presence, owl_session_service_presence, [])),
+	{ok, _MucClientService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
+														muc_client, owl_session_service_muc_client, [])),
+	{ok, _IQHandlerService} = ?my_assertMatch({ok, _}, owl_session:add_service( SessionSrv,
+														iq, owl_session_service_iq_handler, [])),
 
 	?assertMatch( ok, owl_session:launch_services( SessionSrv ) ),
 

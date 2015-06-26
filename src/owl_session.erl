@@ -2,7 +2,7 @@
 -compile ({parse_transform, gin}).
 -export ([
 		start_link/2,
-		subscribe/5,
+		subscribe/5, subscribe/6,
 		unsubscribe/2,
 
 		register_service/3,
@@ -54,13 +54,18 @@
 start_link( StreamSrv, Args ) ->
 	owl_session_srv:start_link( StreamSrv, Args ).
 
-subscribe( SessionSrv, MatchSpec, HandlerPid, Priority, TriggerTimeout )
+
+subscribe( SessionSrv, MatchSpec, HandlerPid, Priority, TriggerTimeout ) ->
+	subscribe( SessionSrv, MatchSpec, [], HandlerPid, Priority, TriggerTimeout ).
+
+subscribe( SessionSrv, MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout )
 	when ?gd_is_srv( SessionSrv )
+	andalso is_list( Predicates )
 	andalso is_pid( HandlerPid )
 	andalso is_integer( Priority )
 	andalso ?gd_is_timeout( TriggerTimeout )
 ->
-	Request = ?subscribe( MatchSpec, HandlerPid, Priority, TriggerTimeout ),
+	Request = ?subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout ),
 	gen_server:call( SessionSrv, Request, ?subscribe_call_timeout ).
 
 unsubscribe( SessionSrv, HandlerID ) when ?gd_is_srv( SessionSrv ) andalso is_reference( HandlerID ) ->

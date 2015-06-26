@@ -1,7 +1,7 @@
 -module (owl_session_handler_map).
 -export ([
 		new/0,
-		subscribe/6, subscribe/5,
+		subscribe/6,
 		unsubscribe/2,
 		get_recepients/2
 	]).
@@ -45,9 +45,6 @@
 new() ->
 	{ok, #hm{}}.
 
-subscribe( MatchSpec, ReceiverPid, Priority, TimeoutAbs, HM ) ->
-	subscribe( MatchSpec, [], ReceiverPid, Priority, TimeoutAbs, HM ).
-
 subscribe( MatchSpec, Predicates, ReceiverPid, Priority, TimeoutAbs, HM ) ->
 	?duration( 'owl_session_handler_map:subscribe/6',
 		subscribe_impl( MatchSpec, Predicates, ReceiverPid, Priority, TimeoutAbs, HM ) ).
@@ -56,9 +53,9 @@ unsubscribe( HandlerID, HM ) ->
 	?duration( 'owl_session_handler_map:unsubscribe/2',
 		unsubscribe_impl( HandlerID, HM ) ).
 
-get_recepients( {NS, NCN, ID}, HM ) ->
+get_recepients( {NS, NCN, ID, Stanza}, HM ) ->
 	?duration( 'owl_session_handler_map:get_recepients/2',
-		get_recepients_impl( {NS, NCN, ID}, HM ) ).
+		get_recepients_impl( {NS, NCN, ID, Stanza}, HM ) ).
 
 
 
@@ -88,10 +85,10 @@ unsubscribe_impl( HandlerID, HM0 = #hm{ handlers = Handlers0, size = Sz0 } ) ->
 	end.
 
 
-get_recepients_impl( {NS, NCN, ID}, HM0 = #hm{ handlers = Handlers0 } ) ->
+get_recepients_impl( {NS, NCN, ID, Stanza}, HM0 = #hm{ handlers = Handlers0 } ) ->
 	{HandlersToTrigger, SzNext, HandlersKept} =
 		?duration('owl_session_handler_map:get_recepients/4[filter]',
-			get_recepients_loop( {NS, NCN, ID}, {[], 0, []}, Handlers0 ) ),
+			get_recepients_loop( {NS, NCN, ID, Stanza}, {[], 0, []}, Handlers0 ) ),
 	Recepients =
 		?duration('owl_session_handler_map:get_recepients/4[sort]',
 			[ {P, HID}
@@ -107,7 +104,7 @@ handler_ordering_fun( #h{ priority = Left }, #h{ priority = Right } ) -> Left =<
 
 get_recepients_loop( _, Result, [] ) -> Result;
 
-get_recepients_loop( StanzaProps = {_, _, _}, {ToTrigger, Count, ToKeep}, [ Handler | HandlersToCheck ] ) ->
+get_recepients_loop( StanzaProps = {_, _, _, _}, {ToTrigger, Count, ToKeep}, [ Handler | HandlersToCheck ] ) ->
 	NextState =
 		case check_handler( StanzaProps, Handler ) of
 			{false, true} ->
@@ -122,13 +119,20 @@ get_recepients_loop( StanzaProps = {_, _, _}, {ToTrigger, Count, ToKeep}, [ Hand
 	get_recepients_loop( StanzaProps, NextState, HandlersToCheck ).
 
 -spec check_handler( { xml_ns(), xml_ncname(), undefined | binary() }, #h{} ) -> { DoesMatch :: boolean(), ShouldKeep :: boolean() }.
-check_handler( StanzaProps, #h{ match = Match, single_shot = SingleShot } ) ->
+check_handler( StanzaProps, #h{ match = Match, single_shot = SingleShot, predicates = Predicates } ) ->
 	case {StanzaProps, Match} of
- 		{ {NS, NCN, DefinedID}, {fqn_and_id, NS, NCN, DefinedID} } -> {true, not SingleShot};
- 		{ {NS, NCN, _}, {fqn, NS, NCN} } -> {true, not SingleShot};
- 		{ {NS, _, _}, {ns, NS} } -> {true, not SingleShot};
+ 		{ {NS, NCN, DefinedID, Stanza}, {fqn_and_id, NS, NCN, DefinedID} } ->
+ 			check_handler_predicates( {true, not SingleShot}, {false, true}, Predicates, Stanza );
+ 		{ {NS, NCN, _, Stanza}, {fqn, NS, NCN} } ->
+ 			check_handler_predicates( {true, not SingleShot}, {false, true}, Predicates, Stanza );
+ 		{ {NS, _, _, Stanza}, {ns, NS} } ->
+ 			check_handler_predicates( {true, not SingleShot}, {false, true}, Predicates, Stanza );
 
  		{ _, _ } -> {false, true}
 	end.
 
-
+check_handler_predicates( IfTrue, IfFalse, Predicates, Stanza ) ->
+	case lists:all( fun(P) -> P(Stanza) end, Predicates ) of
+		true -> IfTrue;
+		false -> IfFalse
+	end.
