@@ -442,7 +442,7 @@ do_call_sax_parse( Data, S0 = #s{ xml_stream_parse_sax = Sax0, xml_stream_parse_
 		{error, ParseError, Sax1} ->
 			?log(info, [ ?MODULE, do_call_sax_parse, {parse_error, ParseError} ]),
 
-			S1 = S0 #s{ xml_stream_parse_sax = Sax1 }, %% WHY?!?! owl_stream_tcp_srv.erl:418: The attempt to match a term of type exp_parse_sax:sax() against the variable Sax1 breaks the opaqueness of the term
+			S1 = S0 #s{ xml_stream_parse_sax = Sax1 }, %% WHY?!?! owl_stream_tcp_srv.erl:...: The attempt to match a term of type exp_parse_sax:sax() against the variable Sax1 breaks the opaqueness of the term
 
 			Event = ?xmpp_error( self(), peer, true, {parse_error, ParseError}, [] ),
 			{ok, S2} = do_enqueue_stream_event( Event, S1 ),
@@ -540,12 +540,15 @@ do_socket_flush( S0 = #s{ downstream_iodata_buffer = Buff } ) ->
 	BuffIOL = ?queue:to_list( Buff ),
 	S1 = S0 #s{ downstream_iodata_buffer = ?queue:new() },
 	?log_io( self, BuffIOL ),
+
 	{ok, _S2} = do_transport_send( BuffIOL, S1 ).
 
 do_transport_send( IOL, S0 = #s{ ranch_transport = TransportMod, ranch_socket = SocketHandle } ) ->
 	case TransportMod:send( SocketHandle, IOL ) of
 		ok -> {ok, S0};
-		{error, Reason} -> {error, Reason}
+		{error, Reason} ->
+			?log( info, [?MODULE, do_transport_send, {socket_error_upon_send, Reason}] ),
+			{ok, S0}
 	end.
 
 
