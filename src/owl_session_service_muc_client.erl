@@ -16,15 +16,26 @@
 		handle_info/2
 	]).
 
+-export ([
+		muc_join/5
+	]).
+
+-include_lib("expellee/include/xml.hrl").
 -include("log.hrl").
 -include("const.hrl").
 -include("ns_xmpp_core.hrl").
 -include("xmpp_session_events.hrl").
 
--define(args( Args ), Args ).
+-define( args( Args ), Args ).
 
--define( muc_join( OccupantJid, ReqPresence ), {muc_join, OccupantJid, ReqPresence} ).
--define( muc_leave( OccupantJid, ReqPresence ), {muc_leave, OccupantJid, ReqPresence} ).
+-define( get_occupant( OccupantJid ), {get_occupant, OccupantJid} ).
+
+
+%%% API %%%
+get_occupant( Service, OccupantJid ) ->
+	gen_server:call( Service, ?get_occupant( OccupantJid ) ).
+
+%%% owl_session_service behaviour %%%
 
 facilities_required( ?args( _ ) ) ->
 	{ok, [
@@ -53,6 +64,9 @@ prerequisites_available( S0 = #s{} ) ->
 
 query_facility( muc_client, S = #s{} ) -> {ok, self(), S}.
 
+handle_call( ?get_occupant( OccupantJid ), ReplyTo, S = #s{} ) ->
+	handle_call_get_occupant( OccupantJid, ReplyTo, S );
+
 handle_call( Unexpected, ReplyTo, S = #s{} ) ->
 	?log(warning, [ ?MODULE, handle_call, {unexpected_request, Unexpected}, {reply_to, ReplyTo} ]),
 	{reply, badarg, S}.
@@ -67,4 +81,12 @@ handle_cast( Unexpected, S = #s{} ) ->
 handle_info( Unexpected, S = #s{} ) ->
 	?log(warning, [ ?MODULE, handle_info, {unexpected_request, Unexpected} ]),
 	{noreply, S}.
+
+
+
+handle_call_get_occupant( OccupantJid, _ReplyTo, S ) ->
+	?log(debug, [?MODULE, handle_call_get_occupant,
+			{occupant_jid, OccupantJid}
+		]),
+	{reply, {error, not_implemented}, S0}.
 
