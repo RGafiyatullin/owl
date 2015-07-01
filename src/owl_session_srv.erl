@@ -96,6 +96,9 @@ handle_info( ?xmpp_stream_open( StreamSrv, StreamAttrs ), S = #s{ stream_srv = S
 handle_info( ?xmpp_stanza( StreamSrv, Stanza ), S = #s{ stream_srv = StreamSrv } ) ->
 	handle_info_xmpp_stanza( Stanza, S );
 
+handle_info( ?xmpp_stream_close( StreamSrv ), S = #s{ stream_srv = StreamSrv } ) ->
+	handle_info_xmpp_stream_close( S );
+
 handle_info( Unexpected, S = #s{} ) ->
 	?log(warning, [ ?MODULE, handle_info, {unexpected_request, Unexpected} ]),
 	{noreply, S, ?hib_timeout( S )}.
@@ -180,6 +183,14 @@ handle_info_xmpp_stanza( Stanza, S0 = #s{ stream_srv = StreamSrv, handler_map = 
 	S1 = S0 #s{ handler_map = HM1 },
 
 	{noreply, S1, ?hib_timeout( S1 )}.
+
+handle_info_xmpp_stream_close( S0 = #s{} ) ->
+	?log( debug, [ ?MODULE, handle_info_xmpp_stream_close ] ),
+	% true = erlang:unlink( ServiceSup ),
+	% true = erlang:exit( ServiceSup, {shutdown, stream_close} ),
+
+	{stop, {shutdown, stream_close}, S0}.
+
 
 handle_call_unsubscribe( HandlerID, _ReplyTo, S0 = #s{ handler_map = HM0 } ) ->
 	{ok, HM1} = ?hm:unsubscribe( HandlerID, HM0 ),
