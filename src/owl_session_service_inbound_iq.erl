@@ -62,7 +62,6 @@ handle_info( Unexpected, S = #s{} ) ->
 	?log(warning, [ ?MODULE, handle_info, {unexpected_request, Unexpected} ]),
 	{noreply, S}.
 
-
 handle_info_stanza_inbound_iq( RequestIQ, S0 = #s{ session_srv = SessionSrv } ) ->
 	?log(debug, [ ?MODULE, handle_info_stanza_inbound_iq, {request_iq, RequestIQ} ]),
 	ResponseIQ = owl_stanza_error:stanza_new( ?stanza_error([
@@ -72,7 +71,9 @@ handle_info_stanza_inbound_iq( RequestIQ, S0 = #s{ session_srv = SessionSrv } ) 
 	ok = owl_session:send_stanza( SessionSrv, ResponseIQ ),
 	{noreply, S0}.
 
-do_subscribe_to_inbound_iq( S0 = #s{ session_srv = SessionSrv } ) ->
+do_subscribe_to_inbound_iq( S0 = #s{ subs_id_iq = SubsID } ) when is_reference( SubsID ) ->
+	{ok, S0};
+do_subscribe_to_inbound_iq( S0 = #s{ session_srv = SessionSrv, subs_id_iq = undefined } ) ->
 	{ok, SubsID} = owl_session:subscribe(
 		SessionSrv, {fqn, ?ns_jabber_client, <<"iq">>},
 		[ fun( IQ ) -> in( owl_stanza_iq:type( IQ ), [ get, set ] ) end ],
