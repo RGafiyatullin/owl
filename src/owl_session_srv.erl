@@ -60,8 +60,8 @@ handle_call( ?get_stream, ReplyTo, S0 ) ->
 handle_call( ?send_stanza( Stanza ), ReplyTo, S0 ) ->
 	handle_call_send_stanza( Stanza, ReplyTo, S0 );
 
-handle_call( ?subscribe( MatchSpec, HandlerPid, Priority, TriggerTimeout ), ReplyTo, S0 ) ->
-	handle_call_subscribe( MatchSpec, HandlerPid, Priority, TriggerTimeout, ReplyTo, S0 );
+handle_call( ?subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout ), ReplyTo, S0 ) ->
+	handle_call_subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout, ReplyTo, S0 );
 
 handle_call( ?unsubscribe( HandlerID ), ReplyTo, S0 ) ->
 	handle_call_unsubscribe( HandlerID, ReplyTo, S0 );
@@ -150,8 +150,8 @@ handle_call_send_stanza( Stanza, _ReplyTo, S0 = #s{ stream_srv = StreamSrv } ) -
 	{reply, ok, S0}.
 
 
-handle_call_subscribe( MatchSpec, HandlerPid, Priority, TriggerTimeout, _ReplyTo, S0 = #s{ handler_map = HM0 } ) ->
-	{ok, HandlerID, HM1} = ?hm:subscribe( MatchSpec, HandlerPid, Priority, TriggerTimeout, HM0 ),
+handle_call_subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout, _ReplyTo, S0 = #s{ handler_map = HM0 } ) ->
+	{ok, HandlerID, HM1} = ?hm:subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout, HM0 ),
 	S1 = S0 #s{ handler_map = HM1 },
 
 	{reply, {ok, HandlerID}, S1, ?hib_timeout( S1 )}.
@@ -201,6 +201,6 @@ handle_call_unsubscribe( HandlerID, _ReplyTo, S0 = #s{ handler_map = HM0 } ) ->
 hm_get_stanza_props( Stanza ) ->
 	{NS, NCN} = exp_node:fqn( Stanza ),
 	ID = owl_stanza:id( Stanza ),
-	{NS, NCN, ID}.
+	{NS, NCN, ID, Stanza}.
 
 
