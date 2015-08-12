@@ -313,7 +313,14 @@ handle_call_send_stream_close( ReplyTo, S0 = #s{ xml_stanza_render_ctx = StanzaR
 
 
 do_dispatch_xmpp_stream_events( S0 ) ->
-	case {is_active( S0 ), has_sax_events( S0 ), has_passive_receiver( S0 ), has_xmpp_stream_event( S0 )} of
+	IsActive = is_active( S0 ),
+	HasSaxEvents = has_sax_events( S0 ),
+	HasPassiveReciever = has_passive_receiver( S0 ),
+	HasXmppStreamEvent = has_xmpp_stream_event( S0 ),
+	?log( debug, [?MODULE, do_dispatch_xmpp_stream_events,
+		{is_active, IsActive}, {has_sax_events, HasSaxEvents},
+		{has_passive_receiver, HasPassiveReciever}, {has_xmpp_stream_event, HasXmppStreamEvent}]),
+	case {IsActive, HasSaxEvents, HasPassiveReciever, HasXmppStreamEvent} of
 		{_, _, true, true} ->
 			{ok, S1} = do_dispatch_event_to_passive_receiver( S0 ),
 			do_dispatch_xmpp_stream_events( S1 );
@@ -382,7 +389,7 @@ do_process_sax_events( S0 = #s{ xml_stream_parse_pending_sax_events = SEQ0 } ) -
 			do_process_sax_event( SaxEvent, S1 );
 
 		empty ->
-			{ok, S0}
+			do_dispatch_xmpp_stream_events( S0 )
 	end.
 
 
