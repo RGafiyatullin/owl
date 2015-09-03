@@ -1,4 +1,4 @@
--module (owl_test).
+-module (owl_xmpp_test).
 -export ([prepare/0]).
 -include_lib("eunit/include/eunit.hrl").
 
@@ -8,11 +8,11 @@ prepare() ->
 	ok.
 
 stream_tcp_tests_test() ->
-	owl_stream_tcp_test:test().
+	owl_xmpp_stream_tcp_test:test().
 
 
 session_tests_test() ->
-	owl_session_test:test().
+	owl_xmpp_session_test:test().
 
 
 

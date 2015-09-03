@@ -1,5 +1,5 @@
--module (owl_session_service_bind).
--behaviour (owl_session_service).
+-module (owl_xmpp_session_service_bind).
+-behaviour (owl_xmpp_session_service).
 
 -export ([
 		facilities_required/1,
@@ -40,14 +40,14 @@ facilities_provided( ?args( _ ) ) -> {ok, [
 		bind_request_timeout = 10000 :: non_neg_integer(),
 
 		resource_to_bind :: binary(),
-		bound_to_jid :: undefined | owl_jid:jid(),
+		bound_to_jid :: undefined | owl_xmpp_jid:jid(),
 
 		subs_id_bind_response :: undefined | reference()
 	}).
 
 init( ?args( Args ), SessionSrv ) ->
 	ResourceToBind = proplists:get_value( resource_to_bind, Args, <<>> ),
-	ok = owl_session_service:notify_facility_available( resource_to_bind, ok, ResourceToBind ),
+	ok = owl_xmpp_session_service:notify_facility_available( resource_to_bind, ok, ResourceToBind ),
 	{ok, #s{
 			session_srv = SessionSrv,
 
@@ -55,7 +55,7 @@ init( ?args( Args ), SessionSrv ) ->
 		}}.
 
 prerequisites_available( S0 = #s{} ) ->
-	IQID = owl_stanza:make_id([ iq, ?MODULE, self() ]),
+	IQID = owl_xmpp_stanza:make_id([ iq, ?MODULE, self() ]),
 	{ok, S1} = do_subscribe_to_bind_response( IQID, S0 ),
 	{ok, _S2} = do_send_bind_request( IQID, S1 ).
 
@@ -78,20 +78,20 @@ handle_info( Unexpected, S = #s{} ) ->
 	{noreply, S}.
 
 handle_info_stanza_bind_response( BindResponseIQ, S0 ) ->
-	case owl_stanza_iq:type( BindResponseIQ ) of
+	case owl_xmpp_stanza_iq:type( BindResponseIQ ) of
 		result ->
 			BoundToJid = bind_response_bound_to_jid( BindResponseIQ ),
 			S1 = S0 #s{ bound_to_jid = BoundToJid },
-			ok = owl_session_service:notify_facility_available( bound_to_jid, ok, BoundToJid ),
+			ok = owl_xmpp_session_service:notify_facility_available( bound_to_jid, ok, BoundToJid ),
 			{noreply, S1};
 		error ->
-			ok = owl_session_service:notify_facility_available( bound_to_jid, error, BindResponseIQ ),
+			ok = owl_xmpp_session_service:notify_facility_available( bound_to_jid, error, BindResponseIQ ),
 			{stop, {error, BindResponseIQ}, S0}
 	end.
 
 
 do_subscribe_to_bind_response( IQID, S0 = #s{ session_srv = SessionSrv, bind_request_timeout = BindRequestTimeout } ) ->
-	{ok, SubsID_BindResponse} = owl_session:subscribe(
+	{ok, SubsID_BindResponse} = owl_xmpp_session:subscribe(
 		SessionSrv, {fqn_and_id, ?ns_jabber_client, <<"iq">>, IQID},
 		self(), ?prio_normal, BindRequestTimeout ),
 	S1 = S0 #s{ subs_id_bind_response = SubsID_BindResponse },
@@ -104,8 +104,8 @@ do_send_bind_request( IQID, S0 = #s{ session_srv = SessionSrv, resource_to_bind 
 					exp_text_node:cdata_new( ResourceToBind )
 				] )
 		] ),
-	BindRequestIQ = owl_stanza_iq:request_new( set, IQID, BindElement ),
-	ok = owl_session:send_stanza( SessionSrv, BindRequestIQ ),
+	BindRequestIQ = owl_xmpp_stanza_iq:request_new( set, IQID, BindElement ),
+	ok = owl_xmpp_session:send_stanza( SessionSrv, BindRequestIQ ),
 	{ok, S0}.
 
 
@@ -118,5 +118,5 @@ bind_response_bound_to_jid( BindResponseIQ ) ->
 			end,
 			exp_node_children:get( BindElement ) ),
 	JidBin = exp_text:text_flat( JidElement ),
-	_BoundToJid = owl_jid:b2j( JidBin ).
+	_BoundToJid = owl_xmpp_jid:b2j( JidBin ).
 

@@ -1,4 +1,4 @@
--module (owl_jid).
+-module (owl_xmpp_jid).
 -export ([
 		nil/0, is_jid/1,
 

@@ -1,4 +1,4 @@
--module (owl_log).
+-module (owl_xmpp_log).
 -compile ({parse_transform, gin}).
 -export ([
 		report/2,

@@ -1,5 +1,5 @@
--module (owl_session_service_presence).
--behaviour (owl_session_service).
+-module (owl_xmpp_session_service_presence).
+-behaviour (owl_xmpp_session_service).
 
 -export ([
 		facilities_required/1,
@@ -42,7 +42,7 @@ facilities_provided( ?args( _ ) ) -> {ok, [ current_presence ]}.
 
 		subs_id_presence :: undefined | reference(),
 
-		bound_to_jid :: undefined | owl_jid:jid(),
+		bound_to_jid :: undefined | owl_xmpp_jid:jid(),
 		seq_id = 0 :: non_neg_integer()
 	}).
 
@@ -75,18 +75,18 @@ handle_info( Unexpected, S = #s{} ) ->
 
 
 handle_info_stanza_presence( Presence, S0 = #s{ bound_to_jid = BoundToJid } ) ->
-	PresenceFrom = owl_stanza:from( Presence ),
+	PresenceFrom = owl_xmpp_stanza:from( Presence ),
 	?log(debug, [ ?MODULE, handle_info_stanza_presence, {presence_from, PresenceFrom}, {bound_to_jid, BoundToJid}, {presence, Presence} ]),
 	S1 =
-		case {PresenceFrom == BoundToJid, owl_stanza_presence:type( Presence )} of
+		case {PresenceFrom == BoundToJid, owl_xmpp_stanza_presence:type( Presence )} of
 			{false, _} -> S0;
 
 			{true, error} ->
-				ok = owl_session_service:notify_facility_available( current_presence, error, Presence ),
+				ok = owl_xmpp_session_service:notify_facility_available( current_presence, error, Presence ),
 				S0;
 
 			{true, available} ->
-				ok = owl_session_service:notify_facility_available( current_presence, ok, Presence ),
+				ok = owl_xmpp_session_service:notify_facility_available( current_presence, ok, Presence ),
 				S0 #s{ current_presence = Presence };
 
 			{_, _} -> S0
@@ -94,7 +94,7 @@ handle_info_stanza_presence( Presence, S0 = #s{ bound_to_jid = BoundToJid } ) ->
 	{noreply, S1}.
 
 do_subscribe_to_presence_stanzas( S0 = #s{ session_srv = SessionSrv } ) ->
-	{ok, SubsID} = owl_session:subscribe(
+	{ok, SubsID} = owl_xmpp_session:subscribe(
 		SessionSrv, {fqn, ?ns_jabber_client, <<"presence">>},
 		self(), ?prio_normal, infinity ),
 	S1 = S0 #s{ subs_id_presence = SubsID },
@@ -103,13 +103,13 @@ do_subscribe_to_presence_stanzas( S0 = #s{ session_srv = SessionSrv } ) ->
 
 do_send_presence( S0 = #s{ session_srv = SessionSrv } ) ->
 	{SeqID, S1} = next_seq_id( S0 ),
-	PresenceID = owl_stanza:make_id( [ presence, ?MODULE, self(), SeqID ] ),
-	Presence = owl_stanza_presence:stanza_new( available, [ {<<"id">>, PresenceID} ] ),
-	ok = owl_session:send_stanza( SessionSrv, Presence ),
+	PresenceID = owl_xmpp_stanza:make_id( [ presence, ?MODULE, self(), SeqID ] ),
+	Presence = owl_xmpp_stanza_presence:stanza_new( available, [ {<<"id">>, PresenceID} ] ),
+	ok = owl_xmpp_session:send_stanza( SessionSrv, Presence ),
 	{ok, S1}.
 
 do_query_jid_bound_to( S0 = #s{ session_srv = SessionSrv } ) ->
-	{ok, BoundToJid} = owl_session_service:query_facility( SessionSrv, bind, bound_to_jid, ?call_timeout_short ),
+	{ok, BoundToJid} = owl_xmpp_session_service:query_facility( SessionSrv, bind, bound_to_jid, ?call_timeout_short ),
 	S1 = S0 #s{ bound_to_jid = BoundToJid },
 	{ok, S1}.
 

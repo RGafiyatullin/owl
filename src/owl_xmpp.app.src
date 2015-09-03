@@ -1,5 +1,5 @@
 {application,
-	owl, [
+	owl_xmpp, [
 			{vsn, "0.0.0"},
 			{registered, []},
 			{applications, []},

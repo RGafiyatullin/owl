@@ -1,5 +1,5 @@
--module (owl_session_service_sasl_auth).
--behaviour (owl_session_service).
+-module (owl_xmpp_session_service_sasl_auth).
+-behaviour (owl_xmpp_session_service).
 
 -export ([
 		facilities_required/1,
@@ -56,10 +56,10 @@ init( ?args( AuthData ), SessionSrv ) ->
 	AuthCID = proplists:get_value( auth_cid, AuthData, <<>> ),
 	AuthHost = proplists:get_value( auth_host, AuthData, <<>> ),
 	AuthSecret = proplists:get_value( auth_secret, AuthData, <<>> ),
-	ok = owl_session_service:notify_facility_available( auth_zid, ok, AuthZID ),
-	ok = owl_session_service:notify_facility_available( auth_cid, ok, AuthCID ),
-	ok = owl_session_service:notify_facility_available( auth_host, ok, AuthCID ),
-	ok = owl_session_service:notify_facility_available( auth_secret, ok, AuthSecret ),
+	ok = owl_xmpp_session_service:notify_facility_available( auth_zid, ok, AuthZID ),
+	ok = owl_xmpp_session_service:notify_facility_available( auth_cid, ok, AuthCID ),
+	ok = owl_xmpp_session_service:notify_facility_available( auth_host, ok, AuthCID ),
+	ok = owl_xmpp_session_service:notify_facility_available( auth_secret, ok, AuthSecret ),
 	{ok, #s{
 			session_srv = SessionSrv,
 
@@ -74,14 +74,14 @@ prerequisites_available( S0 = #s{} ) ->
 	{ok, _S2} = do_send_sasl_auth_request( S1 ).
 
 do_subscribe_to_sasl_response( S0 = #s{ session_srv = SessionSrv } ) ->
-	{ok, SubsID_SaslStanzaRef} = owl_session:subscribe( SessionSrv, ?match_sasl_auth_response, self(), ?prio_normal, infinity ),
+	{ok, SubsID_SaslStanzaRef} = owl_xmpp_session:subscribe( SessionSrv, ?match_sasl_auth_response, self(), ?prio_normal, infinity ),
 	S1 = S0 #s{ subs_id_sasl_response = SubsID_SaslStanzaRef },
 	{ok, S1}.
 
 do_send_sasl_auth_request( S0 = #s{ session_srv = SessionSrv, auth_zid = AuthZID, auth_cid = AuthCID, auth_secret = AuthSecret } ) ->
 	PlainCreds = [ AuthZID, AuthCID, AuthSecret ],
-	SaslRequest = owl_stanza_sasl:stanza_new( <<"auth">>, [{<<"mechanism">>, <<"PLAIN">>}], PlainCreds ),
-	ok = owl_session:send_stanza( SessionSrv, SaslRequest ),
+	SaslRequest = owl_xmpp_stanza_sasl:stanza_new( <<"auth">>, [{<<"mechanism">>, <<"PLAIN">>}], PlainCreds ),
+	ok = owl_xmpp_session:send_stanza( SessionSrv, SaslRequest ),
 	{ok, S0}.
 
 query_facility( auth_zid, S = #s{ auth_zid = V } ) -> {ok, V, S};
@@ -111,27 +111,27 @@ fun_any_of_mechs_available( MechNames ) ->
 	fun( MechanismsFeature ) ->
 		lists:any(
 			fun( MechName ) ->
-				owl_stanza_sasl:feature_mechanisms_has_mech( MechName, MechanismsFeature )
+				owl_xmpp_stanza_sasl:feature_mechanisms_has_mech( MechName, MechanismsFeature )
 			end,
 			MechNames )
 	end.
 
 
 handle_info_stanza_sasl_response( AuthResponse, S0 = #s{} ) ->
-	case owl_stanza_sasl:parse_stanza( AuthResponse ) of
+	case owl_xmpp_stanza_sasl:parse_stanza( AuthResponse ) of
 		{ok, <<"success">>, _, _} ->
 			S1 = S0 #s{ is_authenticated = true },
 			{ok, S2} = do_require_stream_restart( S1 ),
-			ok = owl_session_service:notify_facility_available( is_authenticated, ok, true ),
+			ok = owl_xmpp_session_service:notify_facility_available( is_authenticated, ok, true ),
 			{noreply, S2};
 		{ok, <<"failure">>, _, Reason} ->
-			ok = owl_session_service:notify_facility_available( is_authenticated, error, Reason ),
+			ok = owl_xmpp_session_service:notify_facility_available( is_authenticated, error, Reason ),
 			{noreply, S0}
 	end.
 
 
 do_require_stream_restart( S0 = #s{ session_srv = SessionSrv, auth_host = AuthHost } ) ->
-	{ok, StreamSrv} = owl_session:get_stream( SessionSrv ),
-	ok = owl_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, AuthHost} ] ),
+	{ok, StreamSrv} = owl_xmpp_session:get_stream( SessionSrv ),
+	ok = owl_xmpp_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, AuthHost} ] ),
 	{ok, S0}.
-	% owl_session:require_stream_restart( SessionSrv ),
+	% owl_xmpp_session:require_stream_restart( SessionSrv ),

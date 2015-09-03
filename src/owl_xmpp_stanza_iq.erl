@@ -1,4 +1,4 @@
--module (owl_stanza_iq).
+-module (owl_xmpp_stanza_iq).
 -compile ({parse_transform, gin}).
 -export ([
 		request_new/3,

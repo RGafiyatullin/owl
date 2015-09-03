@@ -1,4 +1,4 @@
--module (owl_session_service).
+-module (owl_xmpp_session_service).
 -compile ({parse_transform, gin}).
 -behaviour (gen_server).
 
@@ -93,7 +93,7 @@ query_facility( ServicePid, FacilityID, Timeout ) ->
 	gen_server:call( ServicePid, {?MODULE, query_facility, FacilityID}, Timeout ).
 
 query_facility( SessionSrv, ServiceID, FacilityID, Timeout ) ->
-	case owl_session:get_service( SessionSrv, ServiceID ) of
+	case owl_xmpp_session:get_service( SessionSrv, ServiceID ) of
 		{ok, ServicePid} -> query_facility( ServicePid, FacilityID, Timeout );
 		Error -> Error
 	end.
@@ -282,7 +282,7 @@ handle_cast_check_prerequisites( S0 = #s{} ) ->
 handle_info_stream_features( StreamFeaturesStanza, S0 = #s{ stream_features_required = FeatureSpecs }) ->
 	?_log(trace, [ ?MODULE, handle_info_stream_features, {stream_features_stanza, StreamFeaturesStanza}], S0),
 	FunCheckSpecIsSatisfied = fun( {NS, NCN, FeatureSpecPredicates} ) ->
-			case owl_stanza_stream_features:get_feature( NS, NCN, StreamFeaturesStanza ) of
+			case owl_xmpp_stanza_stream_features:get_feature( NS, NCN, StreamFeaturesStanza ) of
 				error -> false;
 
 				{ok, Feature} ->
@@ -322,7 +322,7 @@ do_init_service_state( S0 = #s{ session_srv = SessionSrv, service_mod = M, servi
 do_enquire_service_facilities( S0 = #s{ session_srv = SessionSrv, service_facilities_required = RequiredServiceFacilitySpecs } ) ->
 	RepliesExpectedFromPids = lists:map(
 			fun ( {ServiceID, FacilityID, Timeout} ) ->
-				case owl_session:get_service( SessionSrv, ServiceID ) of
+				case owl_xmpp_session:get_service( SessionSrv, ServiceID ) of
 					error -> error( {required_service_missing, ServiceID} );
 					{ok, ServicePid} ->
 						_EnquiryPid = proc_lib:spawn_link( ?MODULE, async_enquire_facility, [ self(), ServicePid, ServiceID, FacilityID, Timeout ] )
@@ -359,7 +359,7 @@ do_reply_upon_facility_available(
 	end.
 
 do_register_service( S0 = #s{ session_srv = SessionSrv, service_id = ServiceID } ) ->
-	ok = owl_session:register_service( SessionSrv, ServiceID, self() ),
+	ok = owl_xmpp_session:register_service( SessionSrv, ServiceID, self() ),
 	{ok, S0}.
 
 -define(match_stream_features, {fqn, ?ns_jabber_streams, <<"features">>}).
@@ -367,7 +367,7 @@ do_subscribe_to_stream_features( S0 = #s{
 		session_srv = SessionSrv,
 		stream_features_subs_id = undefined
 	} ) ->
-		{ok, SubsID_StreamFeatures} = owl_session:subscribe(
+		{ok, SubsID_StreamFeatures} = owl_xmpp_session:subscribe(
 				SessionSrv, ?match_stream_features,
 				self(), ?prio_normal, infinity
 			),

@@ -1,6 +1,6 @@
--ifndef( owl_include_metrics_hrl ).
--define( owl_include_metrics_hrl, true ).
+-ifndef( owl_xmpp_include_metrics_hrl ).
+-define( owl_xmpp_include_metrics_hrl, true ).
 
--define( duration( ProcedureName, Expr ), owl_log:report_duration( ProcedureName, fun() -> Expr end ) ).
+-define( duration( ProcedureName, Expr ), owl_xmpp_log:report_duration( ProcedureName, fun() -> Expr end ) ).
 
--endif. % owl_include_metrics_hrl
+-endif. % owl_xmpp_include_metrics_hrl

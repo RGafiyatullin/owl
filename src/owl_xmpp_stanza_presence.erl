@@ -1,4 +1,4 @@
--module (owl_stanza_presence).
+-module (owl_xmpp_stanza_presence).
 -compile ({parse_transform, gin}).
 -export ([
 		is_presence/1, type/1,

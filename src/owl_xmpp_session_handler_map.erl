@@ -1,4 +1,4 @@
--module (owl_session_handler_map).
+-module (owl_xmpp_session_handler_map).
 -export ([
 		new/0,
 		subscribe/6,
@@ -46,15 +46,15 @@ new() ->
 	{ok, #hm{}}.
 
 subscribe( MatchSpec, Predicates, ReceiverPid, Priority, TimeoutAbs, HM ) ->
-	?duration( 'owl_session_handler_map:subscribe/6',
+	?duration( 'owl_xmpp_session_handler_map:subscribe/6',
 		subscribe_impl( MatchSpec, Predicates, ReceiverPid, Priority, TimeoutAbs, HM ) ).
 
 unsubscribe( HandlerID, HM ) ->
-	?duration( 'owl_session_handler_map:unsubscribe/2',
+	?duration( 'owl_xmpp_session_handler_map:unsubscribe/2',
 		unsubscribe_impl( HandlerID, HM ) ).
 
 get_recepients( {NS, NCN, ID, Stanza}, HM ) ->
-	?duration( 'owl_session_handler_map:get_recepients/2',
+	?duration( 'owl_xmpp_session_handler_map:get_recepients/2',
 		get_recepients_impl( {NS, NCN, ID, Stanza}, HM ) ).
 
 
@@ -87,10 +87,10 @@ unsubscribe_impl( HandlerID, HM0 = #hm{ handlers = Handlers0, size = Sz0 } ) ->
 
 get_recepients_impl( {NS, NCN, ID, Stanza}, HM0 = #hm{ handlers = Handlers0 } ) ->
 	{HandlersToTrigger, SzNext, HandlersKept} =
-		?duration('owl_session_handler_map:get_recepients/4[filter]',
+		?duration('owl_xmpp_session_handler_map:get_recepients/4[filter]',
 			get_recepients_loop( {NS, NCN, ID, Stanza}, {[], 0, []}, Handlers0 ) ),
 	Recepients =
-		?duration('owl_session_handler_map:get_recepients/4[sort]',
+		?duration('owl_xmpp_session_handler_map:get_recepients/4[sort]',
 			[ {P, HID}
 				|| #h{ id = HID, receiver_pid = P }
 				<- lists:sort(

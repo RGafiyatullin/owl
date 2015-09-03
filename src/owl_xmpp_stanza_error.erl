@@ -1,4 +1,4 @@
--module (owl_stanza_error).
+-module (owl_xmpp_stanza_error).
 -export ([
 		new/1,
 		raise/1,

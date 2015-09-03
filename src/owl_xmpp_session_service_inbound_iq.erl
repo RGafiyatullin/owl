@@ -1,6 +1,6 @@
--module (owl_session_service_inbound_iq).
+-module (owl_xmpp_session_service_inbound_iq).
 -compile({parse_transform, gin}).
--behaviour (owl_session_service).
+-behaviour (owl_xmpp_session_service).
 
 -export ([
 		facilities_required/1,
@@ -64,19 +64,19 @@ handle_info( Unexpected, S = #s{} ) ->
 
 handle_info_stanza_inbound_iq( RequestIQ, S0 = #s{ session_srv = SessionSrv } ) ->
 	?log(debug, [ ?MODULE, handle_info_stanza_inbound_iq, {request_iq, RequestIQ} ]),
-	ResponseIQ = owl_stanza_error:stanza_new( ?stanza_error([
+	ResponseIQ = owl_xmpp_stanza_error:stanza_new( ?stanza_error([
 			{condition, 'service-unavailable'},
 			{text, <<"Unhandled IQ">>}
 		]), RequestIQ ),
-	ok = owl_session:send_stanza( SessionSrv, ResponseIQ ),
+	ok = owl_xmpp_session:send_stanza( SessionSrv, ResponseIQ ),
 	{noreply, S0}.
 
 do_subscribe_to_inbound_iq( S0 = #s{ subs_id_iq = SubsID } ) when is_reference( SubsID ) ->
 	{ok, S0};
 do_subscribe_to_inbound_iq( S0 = #s{ session_srv = SessionSrv, subs_id_iq = undefined } ) ->
-	{ok, SubsID} = owl_session:subscribe(
+	{ok, SubsID} = owl_xmpp_session:subscribe(
 		SessionSrv, {fqn, ?ns_jabber_client, <<"iq">>},
-		[ fun( IQ ) -> in( owl_stanza_iq:type( IQ ), [ get, set ] ) end ],
+		[ fun( IQ ) -> in( owl_xmpp_stanza_iq:type( IQ ), [ get, set ] ) end ],
 		self(), ?prio_normal, infinity ),
 	S1 = S0 #s{ subs_id_iq = SubsID },
 	{ok, S1}.

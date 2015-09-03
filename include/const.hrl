@@ -1,5 +1,5 @@
--ifndef( owl_include_const_hrl ).
--define( owl_include_const_hrl, true ).
+-ifndef( owl_xmpp_include_const_hrl ).
+-define( owl_xmpp_include_const_hrl, true ).
 
 -define( call_timeout_short, 1000 ).
 -define( call_timeout_normal, 5000 ).
@@ -15,4 +15,4 @@
 -define( prio_after( P ), ( P + 5 ) ).
 
 
--endif. % owl_include_const_hrl
+-endif. % owl_xmpp_include_const_hrl

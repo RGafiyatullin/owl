@@ -1,4 +1,4 @@
--module (owl_stanza_stream_features).
+-module (owl_xmpp_stanza_stream_features).
 -export ([
 		is_stanza_stream_features/1,
 		get_feature/3

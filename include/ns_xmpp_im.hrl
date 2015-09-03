@@ -1,5 +1,5 @@
--ifndef( owl_include_ns_xmpp_im_hrl ).
--define( owl_include_ns_xmpp_im_hrl, true ).
+-ifndef( owl_xmpp_include_ns_xmpp_im_hrl ).
+-define( owl_xmpp_include_ns_xmpp_im_hrl, true ).
 
 
--endif. % owl_include_ns_xmpp_im_hrl
+-endif. % owl_xmpp_include_ns_xmpp_im_hrl

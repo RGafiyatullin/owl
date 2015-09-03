@@ -1,5 +1,5 @@
--ifndef( owl_include_owl_session_iternals_hrl ).
--define( owl_include_owl_session_iternals_hrl, true ).
+-ifndef( owl_xmpp_include_owl_session_iternals_hrl ).
+-define( owl_xmpp_include_owl_session_iternals_hrl, true ).
 
 -define( subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout ),
 			{subscribe, MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeout} ).
@@ -13,4 +13,4 @@
 -define( get_stream, get_stream ).
 -define( send_stanza( Stanza ), {send_stanza, Stanza} ).
 
--endif. % owl_include_owl_session_iternals_hrl
+-endif. % owl_xmpp_include_owl_session_iternals_hrl

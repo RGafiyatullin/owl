@@ -1,4 +1,4 @@
--module (owl_stream_error).
+-module (owl_xmpp_stream_error).
 -compile ({parse_transform, gin}).
 -include ("xmpp_stream_error.hrl").
 -include ("ns_xmpp_core.hrl").

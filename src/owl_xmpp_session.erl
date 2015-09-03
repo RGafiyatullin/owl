@@ -1,4 +1,4 @@
--module (owl_session).
+-module (owl_xmpp_session).
 -compile ({parse_transform, gin}).
 -export ([
 		start_link/2,
@@ -28,13 +28,13 @@
 -define( get_stream_call_timeout, 5000 ).
 -define( send_stanza_call_timeout, 5000 ).
 
--type owl_session_arg() :: tuple().
+-type owl_xmpp_session_arg() :: tuple().
 
 -type handler_priority() :: integer().
 
--type handler_match_spec() :: owl_session_handler_map:match_spec().
+-type handler_match_spec() :: owl_xmpp_session_handler_map:match_spec().
 
--spec start_link( OwlStreamSrv :: pid(), Args :: [ owl_session_arg() ] ) -> {ok, SessionSrv :: pid()}.
+-spec start_link( OwlStreamSrv :: pid(), Args :: [ owl_xmpp_session_arg() ] ) -> {ok, SessionSrv :: pid()}.
 
 -spec subscribe(
 		SessionSrv :: pid(), MatchSpec :: handler_match_spec(), HandlerPid :: pid(),
@@ -52,7 +52,7 @@
 -spec send_stanza( SessionsSrv :: pid(), Stanza :: xml_element() ) -> ok.
 
 start_link( StreamSrv, Args ) ->
-	owl_session_srv:start_link( StreamSrv, Args ).
+	owl_xmpp_session_srv:start_link( StreamSrv, Args ).
 
 
 subscribe( SessionSrv, MatchSpec, HandlerPid, Priority, TriggerTimeout ) ->
@@ -81,7 +81,7 @@ launch_services( SessionSrv ) ->
 	{ok, AllServices} = gen_server:call( SessionSrv, ?get_services() ),
 	ok = lists:foreach(
 		fun({_ID, Pid}) ->
-			ok = owl_session_service:launch( Pid )
+			ok = owl_xmpp_session_service:launch( Pid )
 		end,
 		AllServices).
 

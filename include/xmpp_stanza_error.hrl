@@ -1,7 +1,7 @@
--ifndef(owl_include_xmpp_stanza_error_hrl).
--define(owl_include_xmpp_stanza_error_hrl, true).
+-ifndef(owl_xmpp_include_xmpp_stanza_error_hrl).
+-define(owl_xmpp_include_xmpp_stanza_error_hrl, true).
 
--include_lib("owl/include/xmpp_error_common.hrl").
+-include_lib("owl_xmpp/include/xmpp_error_common.hrl").
 
 -type xmpp_stanza_error_condition() ::
 		   'bad-request'
@@ -101,4 +101,4 @@
 		).
 
 
--endif. % owl_include_xmpp_stanza_error_hrl
+-endif. % owl_xmpp_include_xmpp_stanza_error_hrl

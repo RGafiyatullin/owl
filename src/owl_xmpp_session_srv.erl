@@ -1,4 +1,4 @@
--module (owl_session_srv).
+-module (owl_xmpp_session_srv).
 -behaviour (gen_server).
 
 -export ([
@@ -24,7 +24,7 @@
 start_link( StreamSrv, Args ) ->
 	gen_server:start_link( ?MODULE, {srv, StreamSrv, Args}, [] ).
 
--define(hm, owl_session_handler_map).
+-define(hm, owl_xmpp_session_handler_map).
 -type handler_map() :: ?hm:handler_map().
 -record( s, {
 		'#module' = ?MODULE :: ?MODULE,
@@ -132,8 +132,8 @@ handle_call_register_service( SatID, SatPid, _ReplyTo, S0 = #s{ sats = Sats0 } )
 handle_call_add_service( ServiceID, ServiceMod, ServiceArgs, ReplyTo, S0 = #s{ service_sup = ServiceSup } ) ->
 	ChildSpec = {
 		ServiceID,
-		{owl_session_service, start_link, [ self(), ServiceID, ServiceMod, ServiceArgs ]},
-		permanent, 1000, worker, [ owl_session_service, ServiceMod ] },
+		{owl_xmpp_session_service, start_link, [ self(), ServiceID, ServiceMod, ServiceArgs ]},
+		permanent, 1000, worker, [ owl_xmpp_session_service, ServiceMod ] },
 	_ = proc_lib:spawn_link(fun() ->
 			Result = supervisor:start_child(ServiceSup, ChildSpec),
 			_ = gen_server:reply( ReplyTo, Result )
@@ -146,7 +146,7 @@ handle_call_get_service( SatID, _ReplyTo, S0 = #s{ sats = Sats } ) ->
 
 
 handle_call_send_stanza( Stanza, _ReplyTo, S0 = #s{ stream_srv = StreamSrv } ) ->
-	ok = owl_stream_tcp:send_stanza( StreamSrv, Stanza ),
+	ok = owl_xmpp_stream_tcp:send_stanza( StreamSrv, Stanza ),
 	{reply, ok, S0}.
 
 
@@ -158,12 +158,12 @@ handle_call_subscribe( MatchSpec, Predicates, HandlerPid, Priority, TriggerTimeo
 
 handle_info_xmpp_control_handed_over( S = #s{ stream_srv = StreamSrv }) ->
 	?log( debug, [ ?MODULE, handle_info_xmpp_control_handed_over ] ),
-	ok = owl_stream_tcp:set_active( StreamSrv, once ),
+	ok = owl_xmpp_stream_tcp:set_active( StreamSrv, once ),
 	{noreply, S, ?hib_timeout( S )}.
 
 handle_info_xmpp_stream_open( StreamAttrs, S = #s{ stream_srv = StreamSrv } ) ->
 	?log( debug, [ ?MODULE, handle_info_xmpp_stream_open, {attrs, StreamAttrs} ] ),
-	ok = owl_stream_tcp:set_active( StreamSrv, once ),
+	ok = owl_xmpp_stream_tcp:set_active( StreamSrv, once ),
 	{noreply, S, ?hib_timeout( S )}.
 
 handle_info_xmpp_stanza( Stanza, S0 = #s{ stream_srv = StreamSrv, handler_map = HM0 } ) ->
@@ -179,7 +179,7 @@ handle_info_xmpp_stanza( Stanza, S0 = #s{ stream_srv = StreamSrv, handler_map = 
 		end,
 		Recepients ),
 
-	ok = owl_stream_tcp:set_active( StreamSrv, once ),
+	ok = owl_xmpp_stream_tcp:set_active( StreamSrv, once ),
 	S1 = S0 #s{ handler_map = HM1 },
 
 	{noreply, S1, ?hib_timeout( S1 )}.
@@ -200,7 +200,7 @@ handle_call_unsubscribe( HandlerID, _ReplyTo, S0 = #s{ handler_map = HM0 } ) ->
 
 hm_get_stanza_props( Stanza ) ->
 	{NS, NCN} = exp_node:fqn( Stanza ),
-	ID = owl_stanza:id( Stanza ),
+	ID = owl_xmpp_stanza:id( Stanza ),
 	{NS, NCN, ID, Stanza}.
 
 

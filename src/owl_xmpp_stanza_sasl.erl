@@ -1,4 +1,4 @@
--module (owl_stanza_sasl).
+-module (owl_xmpp_stanza_sasl).
 -export ([
 		is_stanza_sasl/1,
 

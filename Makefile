@@ -23,13 +23,13 @@ run: compile
 	$(ERL)
 
 test: compile
-	$(ERL) -s owl_test prepare -s owl_test test
+	$(ERL) -s owl_xmpp_test prepare -s owl_xmpp_test test
 
 test-jid: compile
-	$(ERL) -s owl_test prepare -s owl_jid_test test
+	$(ERL) -s owl_xmpp_test prepare -s owl_xmpp_jid_test test
 
 test-session: compile
-	$(ERL) -s owl_test prepare -s owl_session_test test
+	$(ERL) -s owl_xmpp_test prepare -s owl_xmpp_session_test test
 
 dialyze: compile
 	$(DIALYZE_SH)

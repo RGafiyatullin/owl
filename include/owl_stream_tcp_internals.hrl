@@ -1,5 +1,5 @@
--ifndef(owl_include_owl_stream_tcp_internals_hrl).
--define(owl_include_owl_stream_tcp_internals_hrl, true).
+-ifndef(owl_xmpp_include_owl_stream_tcp_internals_hrl).
+-define(owl_xmpp_include_owl_stream_tcp_internals_hrl, true).
 
 -type queue_t( T ) :: queue:queue( T ).
 -define( queue, queue ).
@@ -38,4 +38,4 @@
 -define( set_active( Mode ), { set_active, Mode } ).
 -define( send_stream_close(), send_stream_close ).
 
--endif. % owl_include_owl_stream_tcp_internals_hrl
+-endif. % owl_xmpp_include_owl_stream_tcp_internals_hrl

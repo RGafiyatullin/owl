@@ -1,5 +1,5 @@
--ifndef(owl_include_xmpp_stream_events_hrl).
--define(owl_include_xmpp_stream_events_hrl, true).
+-ifndef(owl_xmpp_include_xmpp_stream_events_hrl).
+-define(owl_xmpp_include_xmpp_stream_events_hrl, true).
 
 -include_lib ("expellee/include/xml.hrl").
 
@@ -20,4 +20,4 @@
 	| ?xmpp_stream_close( pid() )
 	| ?xmpp_stanza( pid(), xml_element() ).
 
--endif. % owl_include_xmpp_stream_events_hrl
+-endif. % owl_xmpp_include_xmpp_stream_events_hrl

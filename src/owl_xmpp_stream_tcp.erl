@@ -1,4 +1,4 @@
--module (owl_stream_tcp).
+-module (owl_xmpp_stream_tcp).
 -compile ({parse_transform, gin}).
 -export ([
 		start_link/4, start_link/5,
@@ -38,7 +38,7 @@ start_link( tcp_connect, Host, Port, TcpOpts, XmppTcpOpts )
 	andalso ?gd_is_port_number( Port )
 ->
 	ControllingProcess = proplists:get_value( controlling_process, XmppTcpOpts, self() ),
-	owl_stream_tcp_srv:start_link( ControllingProcess, {tcp_endpoint, Host, Port, TcpOpts}, XmppTcpOpts ).
+	owl_xmpp_stream_tcp_srv:start_link( ControllingProcess, {tcp_endpoint, Host, Port, TcpOpts}, XmppTcpOpts ).
 
 receive_xmpp_event( Xmpp ) ->
 	receive_xmpp_event( Xmpp, ?receive_xmpp_event_timeout ).

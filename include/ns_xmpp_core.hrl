@@ -1,5 +1,5 @@
--ifndef( owl_include_ns_xmpp_core_hrl ).
--define( owl_include_ns_xmpp_core_hrl, true ).
+-ifndef( owl_xmpp_include_ns_xmpp_core_hrl ).
+-define( owl_xmpp_include_ns_xmpp_core_hrl, true ).
 
 -define( ns_jabber_streams, <<"http://etherx.jabber.org/streams">> ).
 -define( ns_jabber_client, <<"jabber:client">> ).
@@ -10,4 +10,4 @@
 -define( ns_xmpp_session, <<"urn:ietf:params:xml:ns:xmpp-session">> ).
 
 
--endif. % owl_include_ns_xmpp_core_hrl
+-endif. % owl_xmpp_include_ns_xmpp_core_hrl
