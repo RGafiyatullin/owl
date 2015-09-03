@@ -144,9 +144,12 @@ enter_loop_with_socket( ControllingProcess, XmppTcpOpts, RanchTransport, RanchSo
 	gen_server:enter_loop( ?MODULE, [], SInitialized, ?hib_timeout( SInitialized ) ).
 
 enter_loop_with_tcp_endpoint( ControllingProcess, XmppTcpOpts, TcpEndpointHost, TcpEndpointPort, TcpOpts ) ->
-	RanchTransport = ranch_tcp,
-	{ok, RanchSocket} = RanchTransport:connect( TcpEndpointHost, TcpEndpointPort, TcpOpts ),
-	enter_loop_with_socket( ControllingProcess, XmppTcpOpts, RanchTransport, RanchSocket, undefined ).
+	case ranch_tcp:connect( TcpEndpointHost, TcpEndpointPort, TcpOpts ) of
+		{ok, RanchSocket} ->
+			enter_loop_with_socket( ControllingProcess, XmppTcpOpts, ranch_tcp, RanchSocket, undefined );
+		{error, _Reason} = Error ->
+			Error
+	end.
 
 
 init( {} ) -> {stop, enter_loop_used}.
