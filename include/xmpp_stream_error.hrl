@@ -67,8 +67,8 @@
 		common = #xmpp_error_common{} :: #xmpp_error_common{}
 	}).
 
--define( stream_error( Props ), owl_stream_error:new( [ {'common.origin', {?MODULE, ?LINE}} | Props] ) ).
--define( raise_stream_error( Props ), owl_stream_error:raise( ?stream_error( Props ) ) ).
+-define( stream_error( Props ), owl_xmpp_stream_error:new( [ {'common.origin', {?MODULE, ?LINE}} | Props] ) ).
+-define( raise_stream_error( Props ), owl_xmpp_stream_error:raise( ?stream_error( Props ) ) ).
 -define( catch_match_stream_error( FunHandle ), error:( CaughtStreamError = #xmpp_stream_error{} ) -> FunHandle( CaughtStreamError ) ).
 
 

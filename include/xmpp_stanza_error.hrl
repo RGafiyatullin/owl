@@ -84,8 +84,8 @@
 		common = #xmpp_error_common{} :: #xmpp_error_common{}
 	}).
 
--define( stanza_error( Props ), owl_stanza_error:new( [ {'common.origin', {?MODULE, ?LINE}} | Props] ) ).
--define( raise_stanza_error( Props ), owl_stanza_error:raise( ?stream_error( Props ) ) ).
+-define( stanza_error( Props ), owl_xmpp_stanza_error:new( [ {'common.origin', {?MODULE, ?LINE}} | Props] ) ).
+-define( raise_stanza_error( Props ), owl_xmpp_stanza_error:raise( ?stream_error( Props ) ) ).
 -define( catch_match_stanza_error( FunHandle ), error:( CaughtStanzaError = #xmpp_stanza_error{} ) -> FunHandle( CaughtStanzaError ) ).
 
 
