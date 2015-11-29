@@ -3,7 +3,7 @@
 -export ([
 		start_link/4, start_link/5,
 
-		send_stream_open/2, send_stream_open/3,
+		send_stream_open/3, send_stream_open/4,
 		send_stanza/2, send_stanza/3,
 		set_active/2, set_active/3,
 		send_stream_close/1, send_stream_close/2,
@@ -65,12 +65,12 @@ controlling_process( OwlTcpSrv, NewControllingProcess, Timeout ) when ?gd_is_srv
 	OldControllingProcess = self(),
 	gen_server:call( OwlTcpSrv, ?controlling_process( OldControllingProcess, NewControllingProcess ), Timeout ).
 
-send_stream_open( OwlTcpSrv, StreamAttrs ) ->
-	send_stream_open( OwlTcpSrv, StreamAttrs, ?send_stream_open_timeout ).
-send_stream_open( OwlTcpSrv, StreamAttrs, Timeout ) when ?gd_is_srv( OwlTcpSrv ) ->
+%% ReinitParserCtx, rule of a thumb: 'true' for client, 'false' for server.
+send_stream_open( OwlTcpSrv, StreamAttrs, ReinitParserCtx ) ->
+	send_stream_open( OwlTcpSrv, StreamAttrs, ReinitParserCtx, ?send_stream_open_timeout ).
+send_stream_open( OwlTcpSrv, StreamAttrs, ReinitParserCtx, Timeout ) when ?gd_is_srv( OwlTcpSrv ) ->
 	ok = exp_check:check_attr_collection( StreamAttrs ),
-	gen_server:call( OwlTcpSrv, ?send_stream_open( StreamAttrs ), Timeout ).
-
+	gen_server:call( OwlTcpSrv, ?send_stream_open( StreamAttrs, ReinitParserCtx ), Timeout ).
 
 send_stanza( OwlTcpSrv, Stanza ) ->
 	send_stanza( OwlTcpSrv, Stanza, ?send_stanza_timeout ).

@@ -161,8 +161,8 @@ handle_call( ?controlling_process( Old, New ), ReplyTo, S ) ->
 handle_call( ?set_active( Mode ), ReplyTo, S = #s{} ) ->
 	handle_call_set_active( Mode, ReplyTo, S );
 
-handle_call( ?send_stream_open( StreamAttrs ), ReplyTo, S = #s{} ) ->
-	handle_call_send_stream_open( StreamAttrs, ReplyTo, S );
+handle_call( ?send_stream_open( StreamAttrs, ReinitParserCtx ), ReplyTo, S = #s{} ) ->
+	handle_call_send_stream_open( StreamAttrs, ReinitParserCtx, ReplyTo, S );
 
 handle_call( ?send_stanza( Stanza ), ReplyTo, S ) ->
 	handle_call_send_stanza( Stanza, ReplyTo, S );
@@ -261,7 +261,7 @@ handle_call_controlling_process(
 	end.
 
 handle_call_send_stream_open(
-	StreamAttrs, _ReplyTo,
+	StreamAttrs, ReinitParserCtx, _ReplyTo,
 	S0 = #s{
 		opts = XmppTcpOpts,
 
@@ -274,8 +274,13 @@ handle_call_send_stream_open(
 	S1 = S0 #s{ xml_stanza_render_ctx = StanzaRenderCtx },
 	{ok, S2} = do_socket_write( [ <<"<?xml version='1.0'?>">>, OpenTagIOL], S1 ),
 	{ok, S3} = do_socket_flush( S2 ),
-	{ok, S4} = do_destroy_xml_parser_context( S3 ),
-	{ok, S5} = do_initialize_xml_parser_context( XmppTcpOpts, S4 ),
+	{ok, S5} =
+		case ReinitParserCtx of
+			false -> {ok, S3};
+			true ->
+				{ok, S4} = do_destroy_xml_parser_context( S3 ),
+				{ok, _S5} = do_initialize_xml_parser_context( XmppTcpOpts, S4 )
+		end,
 	{reply, ok, S5, ?hib_timeout(S5)}.
 
 handle_call_send_stanza(
@@ -302,11 +307,11 @@ handle_call_send_stream_close( ReplyTo, S0 = #s{ xml_stanza_render_ctx = StanzaR
 		undefined ->
 			{reply, {error, no_stream}, S0, ?hib_timeout(S0)};
 		_Defined ->
-			_ = gen_server:reply( ReplyTo, ok ),
-
 			{ CloseTagIOL, _ } = exp_render_stream:node_close_tag( StreamNS, StreamNCN, StanzaRenderCtx0 ),
 			{ok, S1} = do_socket_write( CloseTagIOL, S0 #s{ xml_stanza_render_ctx = undefined }),
 			{ok, S2} = do_socket_flush( S1 ),
+			_ = gen_server:reply( ReplyTo, ok ),
+
 			{ok, S3} = do_reply_to_all_passive_receivers( {error, closed}, S2 ),
 			{ok, S4} = do_mark_shutdown( S3 ),
 			{noreply, S4, ?hib_timeout( S4 )}

@@ -33,7 +33,7 @@
 -define( match_tag_error( TagError ), {_, _, TagError} ).
 
 -define( controlling_process( Old, New ), {controlling_process, Old, New}).
--define( send_stream_open( StreamAttrs ), { send_stream_open, StreamAttrs } ).
+-define( send_stream_open( StreamAttrs, ReinitParserCtx ), { send_stream_open, StreamAttrs, ReinitParserCtx } ).
 -define( send_stanza( Stanza ), { send_stanza, Stanza } ).
 -define( set_active( Mode ), { set_active, Mode } ).
 -define( send_stream_close(), send_stream_close ).
