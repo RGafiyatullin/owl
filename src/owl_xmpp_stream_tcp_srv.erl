@@ -66,6 +66,7 @@ start_link( ControllingProcess, InitFrom, XmppTcpOpts, StartLinkTimeout ) ->
 				StartLinkTimeout
 			) of
 				{ok, Pid} when is_pid( Pid ) ->
+					ok = RanchTransport:controlling_process( RanchSocket, Pid ),
 					Pid ! OwnershipGrantedMessage,
 					{ok, Pid};
 				Error ->
