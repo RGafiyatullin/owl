@@ -29,6 +29,10 @@
 -define( send_stream_close_timeout, 5000 ).
 -define( controlling_process_timeout, 5000 ).
 
+start_link( socket, TransportMod, Socket, XmppTcpOpts ) ->
+	ControllingProcess = proplists:get_value( controlling_process, XmppTcpOpts, self() ),
+	owl_xmpp_stream_tcp_srv:start_link( ControllingProcess, {socket, TransportMod, Socket}, XmppTcpOpts );
+
 start_link( tcp_connect, Host, Port, XmppTcpOpts ) ->
 	start_link( tcp_connect, Host, Port, [], XmppTcpOpts ).
 
