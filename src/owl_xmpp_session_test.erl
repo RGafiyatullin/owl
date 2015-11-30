@@ -40,7 +40,7 @@ t1_test() ->
 	?assertMatch( ok, owl_xmpp_session:launch_services( SessionSrv ) ),
 
 	?assertMatch( ok, owl_xmpp_stream_tcp:controlling_process( StreamSrv, SessionSrv ) ),
-	?assertMatch( ok, owl_xmpp_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, <<"admin.localhost">>} ] ) ),
+	?assertMatch( ok, owl_xmpp_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, <<"admin.localhost">>} ], true ) ),
 
 	ok.
 

@@ -23,7 +23,7 @@ t2_stanza_presence_test() ->
 owl_xmpp_stream_tcp_active_true_test() ->
 	{ok, Owl} = owl_xmpp_stream_tcp:start_link( tcp_connect, "localhost", 5222, [] ),
 	ok = owl_xmpp_stream_tcp:set_active( Owl, true ),
-	ok = owl_xmpp_stream_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ] ),
+	ok = owl_xmpp_stream_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ], true ),
 
 	{ok, ?xmpp_stream_open( Owl, _StreamAttrs )} = owl_xmpp_stream_tcp:receive_xmpp_event( Owl ),
 
@@ -48,7 +48,7 @@ owl_xmpp_stream_tcp_active_true_test() ->
 
 owl_xmpp_stream_tcp_active_once_test() ->
 	{ok, Owl} = owl_xmpp_stream_tcp:start_link( tcp_connect, "localhost", 5222, [] ),
-	ok = owl_xmpp_stream_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ] ),
+	ok = owl_xmpp_stream_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ], true ),
 
 	ok = owl_xmpp_stream_tcp:set_active( Owl, once ),
 	{ok, ?xmpp_stream_open( Owl, _StreamAttrs1 )} = owl_xmpp_stream_tcp:receive_xmpp_event( Owl ),
@@ -72,7 +72,7 @@ owl_xmpp_stream_tcp_active_once_test() ->
 	{ok, ?xmpp_stanza( Owl, MaybeSaslAuthResponse2 )} = owl_xmpp_stream_tcp:receive_xmpp_event( Owl ),
 	?assert( {?ns_xmpp_sasl, <<"success">>} == exp_node:fqn( MaybeSaslAuthResponse2 ) ),
 
-	ok = owl_xmpp_stream_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ] ),
+	ok = owl_xmpp_stream_tcp:send_stream_open( Owl, [ {<<"to">>, <<"admin.localhost">>} ], true ),
 	ok = owl_xmpp_stream_tcp:set_active( Owl, once ),
 	{ok, ?xmpp_stream_open( Owl, _StreamAttrs2 )} = owl_xmpp_stream_tcp:receive_xmpp_event( Owl ),
 

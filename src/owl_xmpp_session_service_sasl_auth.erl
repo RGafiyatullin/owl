@@ -132,6 +132,6 @@ handle_info_stanza_sasl_response( AuthResponse, S0 = #s{} ) ->
 
 do_require_stream_restart( S0 = #s{ session_srv = SessionSrv, auth_host = AuthHost } ) ->
 	{ok, StreamSrv} = owl_xmpp_session:get_stream( SessionSrv ),
-	ok = owl_xmpp_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, AuthHost} ] ),
+	ok = owl_xmpp_stream_tcp:send_stream_open( StreamSrv, [ {<<"to">>, AuthHost} ], true ),
 	{ok, S0}.
 	% owl_xmpp_session:require_stream_restart( SessionSrv ),
