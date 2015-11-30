@@ -85,20 +85,8 @@
 	}).
 
 -define( stanza_error( Props ), owl_xmpp_stanza_error:new( [ {'common.origin', {?MODULE, ?LINE}} | Props] ) ).
--define( raise_stanza_error( Props ), owl_xmpp_stanza_error:raise( ?stream_error( Props ) ) ).
+-define( raise_stanza_error( Props ), owl_xmpp_stanza_error:raise( ?stanza_error( Props ) ) ).
 -define( catch_match_stanza_error( FunHandle ), error:( CaughtStanzaError = #xmpp_stanza_error{} ) -> FunHandle( CaughtStanzaError ) ).
-
-
--define( _ensure( Expr ), case (Expr) of true -> ok; _ -> error( {badarg, ??Expr} ) end ).
--define( _alter_field( FirstField, AsRecord, SecondField, Value ),
-			(Err #xmpp_stanza_error{
-				FirstField = (
-					( Err #xmpp_stanza_error.FirstField )
-						#AsRecord{ SecondField = Value }
-					)
-				}
-			)
-		).
 
 
 -endif. % owl_xmpp_include_xmpp_stanza_error_hrl

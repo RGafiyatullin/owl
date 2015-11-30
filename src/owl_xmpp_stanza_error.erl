@@ -8,6 +8,17 @@
 -include("xmpp_stanza_error.hrl").
 -include("ns_xmpp_core.hrl").
 
+-define( _ensure( Expr ), case (Expr) of true -> ok; _ -> error( {badarg, ??Expr} ) end ).
+-define( _alter_field( FirstField, AsRecord, SecondField, Value ),
+			(Err #xmpp_stanza_error{
+				FirstField = (
+					( Err #xmpp_stanza_error.FirstField )
+						#AsRecord{ SecondField = Value }
+					)
+				}
+			)
+		).
+
 new( Props ) ->
 	lists:foldl(
 			fun new_props_fold/2,

@@ -11,6 +11,17 @@
 		stanza_new/1
 	]).
 
+-define( _ensure( Expr ), case (Expr) of true -> ok; _ -> error( {badarg, ??Expr} ) end ).
+-define( _alter_field( FirstField, AsRecord, SecondField, Value ),
+			(Err #xmpp_stream_error{
+				FirstField = (
+					( Err #xmpp_stream_error.FirstField )
+						#AsRecord{ SecondField = Value }
+					)
+				}
+			)
+		).
+
 new( Props ) ->
 	lists:foldl(
 			fun new_props_fold/2,

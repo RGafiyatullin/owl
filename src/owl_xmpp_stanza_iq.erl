@@ -4,6 +4,7 @@
 		request_new/3,
 
 		type/1, is_iq/1,
+		query_fqn/1,
 
 		type2bin/1, bin2type/1
 	]).
@@ -31,6 +32,12 @@ type( IQ ) ->
 is_iq( MaybeIQ ) ->
 	{?ns_jabber_client, <<"iq">>} == exp_node:fqn( MaybeIQ ).
 
+query_fqn( IQ ) ->
+	case exp_node_children:get( IQ ) of
+		[] -> {undefined, undefined};
+		[ QueryXml | _ ] ->
+			exp_node:fqn( QueryXml )
+	end.
 
 
 type2bin( T ) when in( T, ?all_iq_types ) -> atom_to_binary( T, latin1 );

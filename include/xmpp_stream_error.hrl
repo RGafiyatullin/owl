@@ -72,16 +72,4 @@
 -define( catch_match_stream_error( FunHandle ), error:( CaughtStreamError = #xmpp_stream_error{} ) -> FunHandle( CaughtStreamError ) ).
 
 
--define( _ensure( Expr ), case (Expr) of true -> ok; _ -> error( {badarg, ??Expr} ) end ).
--define( _alter_field( FirstField, AsRecord, SecondField, Value ),
-			(Err #xmpp_stream_error{
-				FirstField = (
-					( Err #xmpp_stream_error.FirstField )
-						#AsRecord{ SecondField = Value }
-					)
-				}
-			)
-		).
-
-
 -endif. % owl_xmpp_include_xmpp_stream_error_hrl
