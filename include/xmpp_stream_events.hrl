@@ -12,12 +12,4 @@
 
 -define( xmpp_control_handed_over( Xmpp ), {xmpp_control_handed_over, Xmpp} ).
 
--type xmpp_stream_event() ::
-	  ?xmpp_closed( pid() )
-	| ?xmpp_socket_error( pid(), atom() )
-	| ?xmpp_error( pid(), peer | self, boolean(), term(), term() )
-	| ?xmpp_stream_open( pid(), [ xml_attribute() ] )
-	| ?xmpp_stream_close( pid() )
-	| ?xmpp_stanza( pid(), xml_element() ).
-
 -endif. % owl_xmpp_include_xmpp_stream_events_hrl

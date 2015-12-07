@@ -111,7 +111,7 @@ start_link( ControllingProcess, InitFrom, XmppTcpOpts, StartLinkTimeout ) ->
 
 
 		pending_passive_receivers = ?queue:new() :: queue_t( gen_reply_to() ),
-		xmpp_stream_event_queue = ?queue:new() :: queue_t( xmpp_stream_event() ),
+		xmpp_stream_event_queue = ?queue:new() :: queue_t( owl_xmpp:xmpp_stream_event() ),
 
 		shutdown = false :: boolean()
 	}).
