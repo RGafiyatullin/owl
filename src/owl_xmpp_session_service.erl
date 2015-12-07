@@ -53,7 +53,7 @@
 -callback stream_features_required( service_args() ) -> {ok, [ stream_feature_spec() ]}.
 -callback facilities_required( service_args() ) -> {ok, [ service_facility_requirement_spec() ]}.
 -callback facilities_provided( service_args() ) -> {ok, [ service_facility_id() ]}.
--callback init( service_args(), SessionSrv :: pid() ) -> {ok, service_state()}.
+-callback init( service_args(), SessionSrv :: owl_xmpp:session_srv() ) -> {ok, service_state()}.
 -callback query_facility( service_facility_id(), service_state() ) -> {ok, facility_data(), service_state()}.
 -callback prerequisites_available( service_state() ) -> {ok, service_state()}.
 -callback handle_call( Call :: term(), ReplyTo :: gen_reply_to(), service_state() ) -> {noreply, service_state()} | {reply, Reply :: term(), service_state()} | {stop, Reason :: term(), Reply :: term(), service_state()}.
@@ -108,7 +108,7 @@ notify_facility_available( FacilityID, OkayOrError, FacilityData ) ->
 		'#module' = ?MODULE :: ?MODULE,
 		hib_timeout = 5000 :: timeout(),
 
-		session_srv :: pid(),
+		session_srv :: owl_xmpp:session_srv(),
 
 		service_id :: service_id(),
 		service_mod :: service_mod(),
@@ -127,7 +127,7 @@ notify_facility_available( FacilityID, OkayOrError, FacilityData ) ->
 		service_facilities_provided_pending_queries = dict:new() :: dict:dict( service_facility_id(), [ gen_reply_to() ] )
 	}).
 
--spec init({ pid(), service_id(), service_mod(), service_args() }) -> {ok, #s{}, timeout()}.
+-spec init({ owl_xmpp:session_srv(), service_id(), service_mod(), service_args() }) -> {ok, #s{}, timeout()}.
 init( {SessionSrv, ServiceID, ServiceMod, ServiceArgs} ) ->
 	S0 = #s{
 			session_srv = SessionSrv,

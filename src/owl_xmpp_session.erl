@@ -34,22 +34,26 @@
 
 -type handler_match_spec() :: owl_xmpp_session_handler_map:match_spec().
 
--spec start_link( OwlStreamSrv :: pid(), Args :: [ owl_xmpp_session_arg() ] ) -> {ok, SessionSrv :: pid()}.
+-spec start_link(
+	OwlStreamSrv :: owl_xmpp:xmpp_stream_tcp_srv(),
+	Args :: [ owl_xmpp_session_arg() ]
+) ->
+	{ok, SessionSrv :: owl_xmpp:session_srv()}.
 
 -spec subscribe(
-		SessionSrv :: pid(), MatchSpec :: handler_match_spec(), HandlerPid :: pid(),
+		SessionSrv :: owl_xmpp:session_srv(), MatchSpec :: handler_match_spec(), HandlerPid :: pid(),
 		Priority :: handler_priority(), TriggerTimeout :: timeout()
 	) -> {ok, HandlerID :: reference()}.
 
--spec unsubscribe( SessionSrv :: pid(), HandlerID :: reference() ) -> ok.
+-spec unsubscribe( SessionSrv :: owl_xmpp:session_srv(), HandlerID :: reference() ) -> ok.
 
--spec register_service( SessionSrv :: pid(), SatID :: term(), SatPid :: pid() ) -> ok.
+-spec register_service( SessionSrv :: owl_xmpp:session_srv(), SatID :: term(), SatPid :: pid() ) -> ok.
 
--spec get_service( SessionSrv :: pid(), SatID :: term() ) -> {ok, SatPid :: pid()} | error.
+-spec get_service( SessionSrv :: owl_xmpp:session_srv(), SatID :: term() ) -> {ok, SatPid :: pid()} | error.
 
--spec get_stream( SessionSrv :: pid() ) -> {ok, StreamSrv :: pid()}.
+-spec get_stream( SessionSrv :: owl_xmpp:session_srv() ) -> {ok, StreamSrv :: owl_xmpp:xmpp_stream_tcp_srv()}.
 
--spec send_stanza( SessionsSrv :: pid(), Stanza :: xml_element() ) -> ok.
+-spec send_stanza( SessionSrv :: owl_xmpp:session_srv(), Stanza :: xml_element() ) -> ok.
 
 start_link( StreamSrv, Args ) ->
 	owl_xmpp_session_srv:start_link( StreamSrv, Args ).

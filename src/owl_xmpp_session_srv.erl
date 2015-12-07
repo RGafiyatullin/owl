@@ -29,7 +29,7 @@ start_link( StreamSrv, Args ) ->
 -record( s, {
 		'#module' = ?MODULE :: ?MODULE,
 
-		stream_srv :: pid(),
+		stream_srv :: owl_xmpp:session_srv(),
 		handler_map :: handler_map(),
 		sats = dict:new() :: dict:dict( term(), pid() ),
 		service_sup :: pid(),

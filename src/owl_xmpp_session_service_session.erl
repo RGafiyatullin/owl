@@ -38,7 +38,7 @@ facilities_provided( ?args( _ ) ) -> {ok, [
 
 -record(s, {
 		'#module' = ?MODULE :: ?MODULE,
-		session_srv :: pid(),
+		session_srv :: owl_xmpp:session_srv(),
 
 		session_request_timeout = 10000 :: non_neg_integer(),
 

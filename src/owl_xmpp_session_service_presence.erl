@@ -36,7 +36,7 @@ facilities_provided( ?args( _ ) ) -> {ok, [ current_presence ]}.
 
 -record(s, {
 		'#module' = ?MODULE :: ?MODULE,
-		session_srv :: pid(),
+		session_srv :: owl_xmpp:session_srv(),
 
 		current_presence = undefined :: undefined | xml_element(),
 
