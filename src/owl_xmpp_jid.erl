@@ -1,94 +1,334 @@
+
+
 -module (owl_xmpp_jid).
--export ([
-		nil/0, is_jid/1,
 
-		new/3, new/2, new/1,
-		node/1, host/1, resource/1,
-		is_bare/1, bare/1, set_resource/2,
+-export([nil/0]).
+-export([jid2bin/1, bin2jid/1, j2b/1, b2j/1]).
+-export([jid/3, jid/2, jid/1, new/3, new/2, new/1]).
+-export([node/1, host/1, resource/1]).
+-export([to_bare/1, to_host/1, set_resource/2]).
+-export([is_jid/1, is_full/1, is_bare/1, is_host/1]).
 
-		j2b/1, b2j/1
-	]).
--export_type ([
-		jid/0
-	]).
+-define(jid_nil, <<>>).
+-record(jid, {
+	node = ?jid_nil :: jid_node(),
+	host = ?jid_nil :: jid_host(),
+	resource = ?jid_nil :: jid_resource()
+}).
 
--type jid_part() :: binary().
-
--define( nil, <<>> ).
--record( jid, {
-		node :: jid_part(),
-		host :: jid_part(),
-		resource :: jid_part()
-	} ).
-
+-type jid_node() :: binary().
+-type jid_host() :: binary().
+-type jid_resource() :: binary().
 -type jid() :: #jid{}.
+-type jid_part_raw() :: binary() | string() | ?jid_nil.
 
--spec nil() -> jid_part().
--spec is_jid( jid() | term() ) -> boolean().
--spec is_bare( jid() ) -> boolean().
--spec bare( jid() ) -> jid().
--spec set_resource( jid(), jid_part() ) -> jid().
--spec new( N :: jid_part(), H :: jid_part(), R :: jid_part() ) -> jid().
--spec new( N :: jid_part(), H :: jid_part() ) -> jid().
--spec new( H :: jid_part() ) -> jid().
+-export_type([jid_node/0, jid_host/0, jid_resource/0, jid/0]).
 
--spec node( jid() ) -> jid_part().
--spec host( jid() ) -> jid_part().
--spec resource( jid() ) -> jid_part().
 
--spec j2b( jid() ) -> binary().
--spec b2j( binary() ) -> jid().
+%% Interface
 
-nil() -> ?nil.
 
-is_jid( #jid{} ) -> true;
-is_jid( _ ) -> false.
+-spec nil() ->
+	<<>>.
 
-is_bare( J ) -> resource( J ) == nil().
+nil() ->
+	?jid_nil.
 
-new( Node, Host, Resource ) ->
+
+-spec new(
+	Node :: jid_part_raw(),
+	Host :: jid_part_raw(),
+	Resource :: jid_part_raw()
+) ->
+	Ret :: jid().
+
+new(Node, Host, Resource) ->
+	jid(Node, Host, Resource).
+
+
+-spec new(
+	Node :: jid_node(),
+	Host :: jid_host()
+) ->
+	Ret :: jid().
+
+new(Node, Host) ->
+	jid(Node, Host).
+
+
+-spec new(Host :: jid_host()) ->
+	Ret :: jid().
+
+new(Host) ->
+	jid(Host).
+
+
+-spec jid(
+	nocheck,
+	Node :: jid_part_raw(),
+	Host :: jid_part_raw(),
+	Resource :: jid_part_raw()
+) ->
+	Ret :: jid().
+
+jid(nocheck, Node, Host, Resource)
+	when is_binary(Node)
+	andalso is_binary(Host)
+	andalso is_binary(Resource)
+->
+	#jid{node = Node, host = Host, resource = Resource}.
+
+
+-spec jid(
+	Node :: jid_part_raw(),
+	Host :: jid_part_raw(),
+	Resource :: jid_part_raw()
+) ->
+	Ret :: jid().
+
+jid(Node, Host, Resource)
+	when is_binary(Node)
+	andalso is_binary(Host)
+	andalso is_binary(Resource)
+->
 	#jid{
-		node = node_prep(Node),
-		host = host_prep(Host),
-		resource = res_prep(Resource)
-	}.
-new( Node, Host ) -> new( Node, Host, nil() ).
-new( Host ) -> new( nil(), Host, nil() ).
+		node = nodeprep(Node),
+		host = hostprep(Host),
+		resource = resourceprep(Resource)
+	};
 
-bare( J ) -> set_resource( J, nil() ).
-set_resource( J, R ) -> J #jid{ resource = res_prep( R ) }.
+jid(Node, Host, Resource) when is_list(Node) ->
+	jid(utfl_to_bin(Node), Host, Resource);
+
+jid(Node, Host, Resource) when is_list(Host) ->
+	jid(Node, utfl_to_bin(Host), Resource);
+
+jid(Node, Host, Resource) when is_list(Resource) ->
+	jid(Node, Host, utfl_to_bin(Resource));
+
+jid(Node, Host, Resource) ->
+	error({badarg, jid, {Node,Host,Resource}}).
 
 
-node( #jid{ node = N } ) -> N.
-host( #jid{ host = H } ) -> H.
-resource( #jid{ resource = R } ) -> R.
+-spec jid(
+	Node :: jid_node(),
+	Host :: jid_host()
+) ->
+	Ret :: jid().
+
+jid(Node, Host) ->
+	jid(Node, Host, ?jid_nil).
 
 
-j2b( #jid{ node = N, host = H, resource = R } ) ->
-	case {N, H, R, nil()} of
-		{Nil, NotNil, Nil, Nil} when NotNil /= Nil -> H;
-		{Nil, _, NotNil, Nil} when NotNil /= Nil -> <<H/binary, $/, R/binary>>;
-		{NotNil, _, Nil, Nil} when NotNil /= Nil -> <<N/binary, $@, H/binary>>;
-		{_, _, _, _} -> <<N/binary, $@, H/binary, $/, R/binary>>
+-spec jid(Host :: jid_host()) ->
+	Ret :: jid().
+
+jid(Host) ->
+	jid(?jid_nil, Host, ?jid_nil).
+
+
+-spec j2b(Jid :: jid()) ->
+	Ret :: binary().
+
+j2b(Jid) ->
+	jid2bin(Jid).
+
+
+-spec jid2bin(#jid{}) ->
+	Ret :: binary().
+
+jid2bin(#jid{node = ?jid_nil, host = Host, resource = ?jid_nil}) ->
+	<<Host/binary>>;
+
+jid2bin(#jid{node = ?jid_nil, host = Host, resource = Resource}) ->
+	<<Host/binary, $/, Resource/binary>>;
+
+jid2bin(#jid{node = Node, host = Host, resource = ?jid_nil}) ->
+	<<Node/binary, $@, Host/binary>>;
+
+jid2bin(#jid{node = Node, host = Host, resource = Resource}) ->
+	<<Node/binary, $@, Host/binary, $/, Resource/binary>>.
+
+
+-spec b2j(Bin :: binary()) ->
+	Ret :: jid().
+
+b2j(Bin) ->
+	bin2jid(Bin).
+
+
+-spec bin2jid(Bin :: binary()) ->
+	Ret :: jid().
+
+bin2jid(Bin) when is_binary(Bin) ->
+	parse_jid(Bin);
+
+bin2jid(List) when is_list(List) ->
+	parse_jid(utfl_to_bin(List)).
+
+
+-spec to_bare(Jid :: jid()) ->
+	Ret :: jid().
+
+to_bare(Jid = #jid{resource = ?jid_nil}) ->
+	Jid;
+
+to_bare(Jid) ->
+	Jid#jid{resource = ?jid_nil}.
+
+
+-spec to_host(Jid :: jid()) ->
+	Ret :: jid().
+
+to_host(Jid = #jid{resource = ?jid_nil, node = ?jid_nil}) ->
+	Jid;
+
+to_host(Jid) ->
+	Jid#jid{resource = ?jid_nil, node = ?jid_nil}.
+
+
+-spec set_resource(Jid :: jid(), Resource :: jid_resource()) ->
+	Ret :: jid().
+
+set_resource(Jid = #jid{resource = Resource}, Resource) ->
+	Jid;
+
+set_resource(Jid, Resource) ->
+	Jid#jid{resource = resourceprep(Resource)}.
+
+
+-spec is_jid(Jid :: jid()) ->
+	Ret :: boolean().
+
+is_jid(#jid{}) ->
+	true;
+
+is_jid(_Jid) ->
+	false.
+
+
+-spec is_full(Jid :: jid()) ->
+	Ret :: boolean().
+
+is_full(#jid{node = Node, host = Host, resource = Resource}) when
+?jid_nil =/= Node,
+?jid_nil =/= Host,
+?jid_nil =/= Resource ->
+	true;
+
+is_full(_Jid) ->
+	false.
+
+
+-spec is_bare(Jid :: jid()) ->
+	Ret :: boolean().
+
+is_bare(#jid{resource = ?jid_nil}) ->
+	true;
+
+is_bare(_Jid) ->
+	false.
+
+
+-spec is_host(Jid :: jid()) ->
+	Ret :: boolean().
+
+is_host(#jid{node = ?jid_nil, resource = ?jid_nil}) ->
+	true;
+
+is_host(_Jid) ->
+	false.
+
+
+-spec node(Jid :: jid()) ->
+	Ret :: jid_node().
+
+node(#jid{node = Node}) ->
+	Node.
+
+
+-spec host(Jid :: jid()) ->
+	Ret :: jid_host().
+
+host(#jid{host = Host}) ->
+	Host.
+
+
+-spec resource(Jid :: jid()) ->
+	Ret :: jid_resource().
+
+resource(#jid{resource = Resource}) ->
+	Resource.
+
+
+%% Internals
+
+
+-spec nodeprep(Node :: jid_node()) ->
+	Ret :: jid_node().
+
+nodeprep(Node) ->
+	chk(to_lower(Node), nodeprep).
+
+
+-spec hostprep(Host :: jid_host()) ->
+	Ret :: jid_host().
+
+hostprep(Host) ->
+	chk(to_lower(Host), hostprep).
+
+
+-spec resourceprep(Resource :: jid_resource()) ->
+	Ret :: jid_resource().
+
+resourceprep(Resource) ->
+	chk(Resource, resourceprep).
+
+
+-spec chk(Bin :: jid_node() | jid_host() | jid_resource(), Type :: nodeprep | hostprep | resourceprep) ->
+	Ret :: jid_node() | jid_host() | jid_resource().
+
+chk(Bin, Type) ->
+	case binary:match(Bin, [<<$@>>, <<$/>>]) of
+		nomatch -> Bin;
+		_ -> error({badarg, Type, Bin})
 	end.
 
-b2j( JidBin ) ->
-	{Node, HostAndRes} =
-		case binary:split(JidBin, <<$@>>) of
-			[ NodePart, NoNodePart ] -> {NodePart, NoNodePart};
-			[ NoNodePart ] -> {nil(), NoNodePart}
-		end,
-	{Host, Resource} =
-		case binary:split(HostAndRes, <<$/>>) of
-			[ HostPart, ResPart ] -> {HostPart, ResPart};
-			[ HostPart ] -> {HostPart, nil()}
-		end,
-	#jid{ node = node_prep(Node), host = host_prep(Host), resource = res_prep(Resource) }.
+
+-spec parse_jid(binary()) ->
+	jid().
+
+parse_jid(StrJid) when is_binary(StrJid) ->
+	case binary:split(StrJid, [<<$@>>, <<$/>>], [global]) of
+		[NodeName, HostName, ResName]
+		when size(NodeName) > 0
+		andalso size(HostName) > 0
+		andalso size(ResName) > 0
+			->
+				jid(nocheck, to_lower(NodeName), to_lower(HostName), ResName);
+		[NodeName, HostName]
+		when size(NodeName) > 0
+		andalso size(HostName) > 0
+			->
+				jid(nocheck, to_lower(NodeName), to_lower(HostName), ?jid_nil);
+		[HostName]
+		when size(HostName) > 0
+			->
+				jid(nocheck, ?jid_nil, to_lower(HostName), ?jid_nil);
+		_ ->
+			error({badarg, 'jid-malformed', StrJid})
+	end.
 
 
+-spec to_lower(Bin :: binary()) ->
+	Ret :: binary().
 
-%% The following four are the stubs currently
-node_prep( B ) when is_binary( B ) -> B.
-host_prep( B ) when is_binary( B ) -> to_lower( B ).
-res_prep( B ) when is_binary( B ) -> B.
-to_lower( B ) when is_binary( B ) -> B.
+to_lower(Bin) when is_binary(Bin) ->
+	unistring:to_lower(Bin).
+
+
+-spec utfl_to_bin(List :: [integer()]) ->
+	binary().
+
+utfl_to_bin(List) ->
+	unicode:characters_to_binary(List, utf8, utf8).
