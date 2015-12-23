@@ -2,6 +2,7 @@
 -compile ({parse_transform, gin}).
 -export ([
 		request_new/3,
+		response_new/2,
 
 		type/1, is_iq/1,
 		query_fqn/1,
@@ -14,7 +15,7 @@
 -define( all_iq_types, [ get, set, result, error ] ).
 -define( all_iq_types_bin, [ <<"get">>, <<"set">>, <<"result">>, <<"error">> ] ).
 
--spec request_new( get|set, binary(), #xe{} ) -> #xe{}.
+-spec request_new( get|set, binary(), owl_xmpp:xml_element() ) -> owl_xmpp:xml_element().
 request_new( Type, ID, QueryElement )
 	when in(Type, [get, set])
 	andalso is_binary( ID )
@@ -38,6 +39,25 @@ query_fqn( IQ ) ->
 		[ QueryXml | _ ] ->
 			exp_node:fqn( QueryXml )
 	end.
+
+-spec response_new(
+		RequestIQ :: owl_xmpp:xml_element(),
+		MaybeResponseBody :: undefined | owl_xmpp:xml_element()
+	) ->
+		ResponseIQ :: owl_xmpp:xml_element().
+
+response_new( ReqIQ, RespBody ) ->
+	true = is_iq(ReqIQ),
+	ReqType = type(ReqIQ),
+	true = ( ReqType == get orelse ReqType == set ),
+	ID = owl_xmpp_stanza:id(ReqIQ),
+	exp_node:new(
+		{?ns_jabber_client, <<"iq">>},
+		[{<<"id">>, ID}, {<<"type">>, <<"result">>}],
+		case RespBody of
+			undefined -> [];
+			_ -> [RespBody]
+		end).
 
 
 type2bin( T ) when in( T, ?all_iq_types ) -> atom_to_binary( T, latin1 );
