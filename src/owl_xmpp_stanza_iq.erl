@@ -7,6 +7,8 @@
 		type/1, is_iq/1,
 		query_fqn/1,
 
+		body/1,
+
 		type2bin/1, bin2type/1
 	]).
 -include_lib("expellee/include/xml.hrl").
@@ -38,6 +40,14 @@ query_fqn( IQ ) ->
 		[] -> {undefined, undefined};
 		[ QueryXml | _ ] ->
 			exp_node:fqn( QueryXml )
+	end.
+
+-spec body(owl_xmpp:xml_element()) -> undefined | owl_xmpp:xml_element().
+body(IQ) ->
+	true = is_iq(IQ),
+	case exp_node_children:get(IQ) of
+		[] -> undefined;
+		[Body | _] -> Body
 	end.
 
 -spec response_new(
