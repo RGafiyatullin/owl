@@ -1,5 +1,8 @@
 -module (owl_xmpp_stream_error).
 -compile ({parse_transform, gin}).
+-export_type([
+		stream_error/0
+	]).
 -export ([
 		new/1,
 		raise/1,
@@ -13,6 +16,8 @@
 	]).
 -include ("xmpp_stream_error.hrl").
 -include ("ns_xmpp_core.hrl").
+
+-type stream_error() :: #xmpp_stream_error{}.
 
 -spec b2c( binary() ) -> xmpp_stream_error_condition().
 -spec c2b( xmpp_stream_error_condition() ) -> binary().

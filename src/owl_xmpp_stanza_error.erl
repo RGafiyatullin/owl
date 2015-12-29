@@ -1,4 +1,7 @@
 -module (owl_xmpp_stanza_error).
+-export_type([
+		stanza_error/0
+	]).
 -export ([
 		new/1,
 		raise/1,
@@ -11,6 +14,8 @@
 	]).
 -include("xmpp_stanza_error.hrl").
 -include("ns_xmpp_core.hrl").
+
+-type stanza_error() :: #xmpp_stanza_error{}.
 
 -spec b2c( binary() ) -> xmpp_stanza_error_condition().
 -spec c2b( xmpp_stanza_error_condition() ) -> binary().
