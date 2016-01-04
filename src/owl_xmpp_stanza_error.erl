@@ -6,7 +6,8 @@
 		new/1,
 		raise/1,
 		property/2,
-		stanza_new/2
+		stanza_new/2,
+		stanza_parse/1
 	]).
 -export ([
 		b2c/1,
@@ -144,15 +145,14 @@ stanza_new( Err, RequestStanza ) ->
 			[ {<<"type">>, <<"error">>} ] ++ Attrs,
 			[ ErrorSubElement ] ).
 
-
+stanza_parse( Stanza ) ->
+	{ok, {stub_for_parsing_stanza_error, Stanza}}.
 
 maybe_attr( NewAttrName, OldAttrName, RequestStanza ) ->
 	case exp_node_attrs:attr( OldAttrName, RequestStanza ) of
 		undefined -> [];
 		Defined -> [ {NewAttrName, Defined} ]
 	end.
-
-
 
 
 -define( _ensure( Expr ), case (Expr) of true -> ok; _ -> error( {badarg, ??Expr} ) end ).

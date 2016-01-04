@@ -8,7 +8,8 @@
 		raise/1,
 		property/2,
 
-		stanza_new/1
+		stanza_new/1,
+		stanza_parse/1
 	]).
 -export ([
 		b2c/1,
@@ -103,6 +104,9 @@ property( Property, Error = #xmpp_stream_error{} ) ->
 		'common.reason' ->
 			Error #xmpp_stream_error.common #xmpp_error_common.reason
 	end.
+
+stanza_parse( Stanza ) ->
+	{ok, {stub_for_parsing_stream_error, Stanza}}.
 
 stanza_new( Err ) ->
 	Condition = property( condition, Err ),
