@@ -113,7 +113,8 @@ start_link( ControllingProcess, InitFrom, XmppTcpOpts, StartLinkTimeout ) ->
 		pending_passive_receivers = ?queue:new() :: queue_t( gen_reply_to() ),
 		xmpp_stream_event_queue = ?queue:new() :: queue_t( owl_xmpp:xmpp_stream_event() ),
 
-		shutdown = false :: boolean()
+		shutdown = false :: boolean(),
+		shutdown_reason = undefined :: undefined | term()
 	}).
 
 -type state() :: #s{}.
@@ -221,15 +222,35 @@ handle_info_socket_data( Data, S0 ) ->
 
 	{noreply, S3, ?hib_timeout(S3)}.
 
-handle_info_socket_error( SocketError, S0 = #s{} ) ->
+handle_info_socket_error( SocketError, S0) ->
 	?log(info, [?MODULE, handle_info_socket_error, {socket_error, SocketError}]),
 	S1 = S0 #s{ socket_activated = false },
-	{noreply, S1, ?hib_timeout(S1)}.
+	do_reply_to_all_passive_receivers_and_maybe_shutdown(SocketError, S1).
+
 
 handle_info_socket_closed( S0 = #s{} ) ->
 	?log(info, [?MODULE, handle_info_socket_closed]),
 	S1 = S0 #s{ socket_activated = false },
-	{noreply, S1, ?hib_timeout(S1)}.
+	do_reply_to_all_passive_receivers_and_maybe_shutdown(closed, S1).
+
+
+do_reply_to_all_passive_receivers_and_maybe_shutdown( ReplyReason, S0 = #s{ controlling_process = ControllingProcess } ) ->
+	{ok, S1} = do_reply_to_all_passive_receivers({error, ReplyReason}, S0),
+	case is_active(S1) of
+		false ->
+			{ok, S2} = do_mark_shutdown( ReplyReason, S1 ),
+			{noreply,
+				S2,
+				?hib_timeout(S2)};
+		TrueOrOnce when TrueOrOnce == true orelse TrueOrOnce == once ->
+			SocketClosedMessage =
+				case ReplyReason of
+					closed -> ?xmpp_closed(self());
+					Other -> ?xmpp_socket_error(self(), Other)
+				end,
+			ControllingProcess ! SocketClosedMessage,
+			{stop, ?normal_shutdown_reason(S1), S1}
+	end.
 
 
 handle_call_set_active( IsActiveNew, ReplyTo, S0 = #s{ is_active = IsActiveOld } ) ->
@@ -261,6 +282,11 @@ handle_call_controlling_process(
 	end.
 
 handle_call_send_stream_open(
+		_, _, _, S = #s{ shutdown = true, shutdown_reason = Reason }
+	) ->
+		{reply, {error, Reason}, S, ?hib_timeout(S)};
+
+handle_call_send_stream_open(
 	StreamAttrs, ReinitParserCtx, _ReplyTo,
 	S0 = #s{
 		opts = XmppTcpOpts,
@@ -283,6 +309,12 @@ handle_call_send_stream_open(
 		end,
 	{reply, ok, S5, ?hib_timeout(S5)}.
 
+
+handle_call_send_stanza(
+		_, _, S = #s{ shutdown = true, shutdown_reason = Reason }
+	) ->
+		{reply, {error, Reason}, S, ?hib_timeout(S)};
+
 handle_call_send_stanza(
 	Stanza, _ReplyTo,
 	S0 = #s{
@@ -301,6 +333,12 @@ handle_call_send_stanza(
 			{reply, ok, S3, ?hib_timeout(S3)}
 	end.
 
+
+handle_call_send_stream_close(
+		_, S = #s{ shutdown = true, shutdown_reason = Reason }
+	) ->
+		{reply, {error, Reason}, S, ?hib_timeout(S)};
+
 handle_call_send_stream_close( ReplyTo, S0 = #s{ xml_stanza_render_ctx = StanzaRenderCtx0, xml_stream_fqn = {StreamNS, StreamNCN} } ) ->
 	?log( debug, [ ?MODULE, handle_call_send_stream_close ] ),
 	case StanzaRenderCtx0 of
@@ -313,7 +351,7 @@ handle_call_send_stream_close( ReplyTo, S0 = #s{ xml_stanza_render_ctx = StanzaR
 			_ = gen_server:reply( ReplyTo, ok ),
 
 			{ok, S3} = do_reply_to_all_passive_receivers( {error, closed}, S2 ),
-			{ok, S4} = do_mark_shutdown( S3 ),
+			{ok, S4} = do_mark_shutdown( closed, S3 ),
 			{noreply, S4, ?hib_timeout( S4 )}
 	end.
 
@@ -321,7 +359,13 @@ handle_call_send_stream_close( ReplyTo, S0 = #s{ xml_stanza_render_ctx = StanzaR
 
 
 
-do_dispatch_xmpp_stream_events( S0 ) ->
+do_dispatch_xmpp_stream_events(
+	S0 = #s{
+		shutdown = ShouldShutdown,
+		shutdown_reason = ShutdownReason,
+		controlling_process = ControllingProcess
+	}
+) ->
 	IsActive = is_active( S0 ),
 	HasSaxEvents = has_sax_events( S0 ),
 	HasPassiveReciever = has_passive_receiver( S0 ),
@@ -349,8 +393,17 @@ do_dispatch_xmpp_stream_events( S0 ) ->
 		{true, true, false, false} ->
 			do_process_sax_events( S0 );
 
-		{true, false, false, false} ->
+		{true, false, false, false} when not ShouldShutdown ->
 			{ok, _S1} = do_socket_activate( S0 );
+
+		{true, false, false, false} when ShouldShutdown ->
+			SocketClosedMessage =
+				case ShutdownReason of
+					closed -> ?xmpp_closed(self());
+					Other -> ?xmpp_socket_error(self(), Other)
+				end,
+			ControllingProcess ! SocketClosedMessage,
+			erlang:exit(?normal_shutdown_reason(S0));
 
 		{false, _, false, _} ->
 			{ok, S0}
@@ -418,7 +471,7 @@ do_process_sax_event(
 		{ok, S1} = do_enqueue_stream_event( Event, S0 ),
 		{ok, S2} = do_dispatch_event_to_controlling_process( S1 ),
 		{ok, S3} = do_reply_to_all_passive_receivers( {error, closed}, S2 ),
-		{ok, _S4} = do_mark_shutdown( S3 );
+		{ok, _S4} = do_mark_shutdown( closed, S3 );
 
 do_process_sax_event(
 		StanzaSaxEvent,
@@ -446,7 +499,7 @@ do_process_sax_event(
 				{ok, S1} = do_enqueue_stream_event( Event, S0 ),
 				{ok, S2} = do_dispatch_event_to_controlling_process( S1 ),
 				{ok, S3} = do_reply_to_all_passive_receivers( Event, S2 ),
-				{ok, _S4} = do_mark_shutdown( S3 )
+				{ok, _S4} = do_mark_shutdown( closed, S3 )
 		end.
 
 do_call_sax_parse( Data, S0 = #s{ xml_stream_parse_sax = Sax0, xml_stream_parse_pending_sax_events = SEQ0 }) ->
@@ -464,13 +517,14 @@ do_call_sax_parse( Data, S0 = #s{ xml_stream_parse_sax = Sax0, xml_stream_parse_
 			{ok, S2} = do_enqueue_stream_event( Event, S1 ),
 			{ok, S3} = do_dispatch_event_to_controlling_process( S2 ),
 			{ok, S4} = do_reply_to_all_passive_receivers( Event, S3 ),
-			{ok, _S5} = do_mark_shutdown( S4 )
+			{ok, _S5} = do_mark_shutdown( closed, S4 )
 	end.
 
 do_enqueue_stream_event( Event, S0 = #s{ xmpp_stream_event_queue = XSE_Q0 } ) ->
 	XSE_Q1 = ?queue:in( Event, XSE_Q0 ),
 	S1 = S0 #s{ xmpp_stream_event_queue = XSE_Q1 },
 	{ok, S1}.
+
 
 do_reply_to_all_passive_receivers( ReplyWith, S0 = #s{ pending_passive_receivers = PPR_Q } ) ->
 	case ?queue:peek( PPR_Q ) of
@@ -480,9 +534,9 @@ do_reply_to_all_passive_receivers( ReplyWith, S0 = #s{ pending_passive_receivers
 			do_reply_to_all_passive_receivers( ReplyWith, S0 #s{ pending_passive_receivers = ?queue:drop( PPR_Q ) } )
 	end.
 
-do_mark_shutdown( S0 = #s{} ) ->
-	{ok, S0 #s{ shutdown = true }}.
 
+do_mark_shutdown( Reason, S0 ) ->
+	{ok, S0 #s{ shutdown = true, shutdown_reason = Reason }}.
 
 do_maybe_wait_for_ownership_granted_messages( OwnershipGrantedMessage, S ) ->
 	case OwnershipGrantedMessage of
