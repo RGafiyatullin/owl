@@ -207,12 +207,15 @@ stanza_parse_safe(Stanza) ->
 			[] ->
 				undefined
 		end,
-	ErrorProps = [
+	ErrorProps = lists:filter(
+		fun({_, Value}) ->
+			Value /= undefined
+		end,
+		[
 			{condition, ErrorCondition},
 			{type, ErrorType},
 			{text, ErrorText}
-		],
-	error_logger:info_report([{stanza_error_parsed, ErrorProps}]),
+		]),
 	{ok, new(ErrorProps)}.
 
 
@@ -251,7 +254,7 @@ new_props_fold( Opt, Err ) ->
 			?_ensure( is_integer( Code ) orelse Code == undefined ),
 			?_alter_field( public, xmpp_stanza_error_pub, code, Code );
 		{type, Type} ->
-			?_ensure( ?is_xmpp_stanza_error_type( Type ) orelse Type == undefined ),
+			?_ensure( ?is_xmpp_stanza_error_type( Type ) ),
 			?_alter_field( public, xmpp_stanza_error_pub, type, Type );
 		{xml_children, Xmls} ->
 			?_ensure( is_list( Xmls ) ),
