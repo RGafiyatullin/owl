@@ -145,8 +145,79 @@ stanza_new( Err, RequestStanza ) ->
 			[ {<<"type">>, <<"error">>} ] ++ Attrs,
 			[ ErrorSubElement ] ).
 
-stanza_parse( Stanza ) ->
-	{ok, {stub_for_parsing_stanza_error, Stanza}}.
+stanza_parse(Stanza) ->
+	% StanzaFQN = exp_node:fqn(Stanza),
+	try
+		stanza_parse_safe(Stanza)
+	catch
+		throw:{error, Reason} -> {error, Reason}
+	end.
+
+stanza_parse_safe(Stanza) ->
+	StanzaChildren = exp_node_children:get(Stanza),
+	ErrorElement =
+		case [ E
+			|| E <- StanzaChildren
+			, exp_node:fqn(E) == {?ns_jabber_client, <<"error">>}
+		] of
+			[ E | _ ] -> E;
+			[] -> throw({error, not_an_error})
+		end,
+	ErrorType =
+		case exp_node_attrs:attr(<<"type">>, ErrorElement) of
+			<<"auth">> -> auth;
+			<<"cancel">> -> cancel;
+			<<"continue">> -> continue;
+			<<"modify">> -> modify;
+			<<"wait">> -> wait;
+			undefined -> undefined;
+			BadType -> throw({error, {bad_type, BadType}})
+		end,
+	ErrorElementChildren = exp_node_children:get(ErrorElement),
+	ErrorCondition =
+		case lists:filter(
+			fun(E) ->
+				case exp_node:fqn(E) of
+					{?ns_xmpp_stanzas, MaybeCondition} ->
+						try
+							_ = b2c(MaybeCondition),
+							true
+						catch error:{badarg, stanza_error_condition, _} ->
+							false
+						end;
+
+					{_, _} ->
+						false
+				end
+			end, ErrorElementChildren)
+		of
+			[ ConditionElement | _ ] ->
+				b2c(exp_node:ncn(ConditionElement));
+			[] ->
+				throw({error, no_condition})
+		end,
+	ErrorText =
+		case [ E
+			|| E <- ErrorElementChildren
+			, exp_node:fqn(E) == {?ns_xmpp_stanzas, <<"text">>}
+		] of
+			[TextElement | _] ->
+				exp_text:text_flat(TextElement);
+
+			[] ->
+				undefined
+		end,
+	{ok, new([
+			{condition, ErrorCondition},
+			{type, ErrorType},
+			{text, ErrorText}
+		])}.
+
+
+
+
+
+
 
 maybe_attr( NewAttrName, OldAttrName, RequestStanza ) ->
 	case exp_node_attrs:attr( OldAttrName, RequestStanza ) of
