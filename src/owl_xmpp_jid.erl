@@ -64,22 +64,6 @@ new(Host) ->
 
 
 -spec jid(
-	nocheck,
-	Node :: jid_part_raw(),
-	Host :: jid_part_raw(),
-	Resource :: jid_part_raw()
-) ->
-	Ret :: jid().
-
-jid(nocheck, Node, Host, Resource)
-	when is_binary(Node)
-	andalso is_binary(Host)
-	andalso is_binary(Resource)
-->
-	#jid{node = Node, host = Host, resource = Resource}.
-
-
--spec jid(
 	Node :: jid_part_raw(),
 	Host :: jid_part_raw(),
 	Resource :: jid_part_raw()
@@ -288,10 +272,16 @@ resourceprep(Resource) ->
 -spec chk(Bin :: jid_node() | jid_host() | jid_resource(), Type :: nodeprep | hostprep | resourceprep) ->
 	Ret :: jid_node() | jid_host() | jid_resource().
 
-chk(Bin, Type) ->
+chk(Bin, resourceprep) -> Bin;
+chk(Bin, nodeprep) ->
+	case binary:match(Bin, [<<$/>>]) of
+		nomatch -> Bin;
+		_ -> error({badarg, nodeprep, Bin})
+	end;
+chk(Bin, hostprep) ->
 	case binary:match(Bin, [<<$@>>, <<$/>>]) of
 		nomatch -> Bin;
-		_ -> error({badarg, Type, Bin})
+		_ -> error({badarg, hostprep, Bin})
 	end.
 
 
@@ -299,26 +289,30 @@ chk(Bin, Type) ->
 	jid().
 
 parse_jid(StrJid) when is_binary(StrJid) ->
-	case binary:split(StrJid, [<<$@>>, <<$/>>], [global]) of
-		[NodeName, HostName, ResName]
-		when size(NodeName) > 0
-		andalso size(HostName) > 0
-		andalso size(ResName) > 0
-			->
-				jid(nocheck, to_lower(NodeName), to_lower(HostName), ResName);
-		[NodeName, HostName]
-		when size(NodeName) > 0
-		andalso size(HostName) > 0
-			->
-				jid(nocheck, to_lower(NodeName), to_lower(HostName), ?jid_nil);
-		[HostName]
-		when size(HostName) > 0
-			->
-				jid(nocheck, ?jid_nil, to_lower(HostName), ?jid_nil);
-		_ ->
-			error({badarg, 'jid-malformed', StrJid})
+	{StrJidBare, Resource} =
+		case binary:split(StrJid, [<<$/>>]) of
+			[SinglePart] -> {SinglePart, nil()};
+			[Left, Right] -> {Left, Right}
+		end,
+	{Node, Host} = binary_split_reverse(StrJidBare, $@),
+	jid(Node, Host, Resource).
+
+binary_split_reverse(Bin, Ch) ->
+	BinSize = size(Bin),
+	case binary_find_reverse_loop(BinSize - 1, Bin, Ch) of
+		undefined -> {nil(), Bin};
+		Pos ->
+			<<Left:Pos/binary, _, Right/binary>> = Bin,
+			{Left, Right}
 	end.
 
+
+binary_find_reverse_loop(0, _, _) -> undefined;
+binary_find_reverse_loop(Pos, Bin, Ch) ->
+	case binary:at(Bin, Pos) of
+		Ch -> Pos;
+		_ -> binary_find_reverse_loop(Pos - 1, Bin, Ch)
+	end.
 
 -spec to_lower(Bin :: binary()) ->
 	Ret :: binary().
