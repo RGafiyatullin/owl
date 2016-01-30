@@ -10,8 +10,9 @@ report( Info, Report ) when in(Info, [trace, debug, info]) -> error_logger:info_
 report( warning, Report ) -> error_logger:warning_report( [self() | Report] );
 report( error, Report ) -> error_logger:error_report( [self() | Report] ).
 
-report_io( Party, IO ) ->
-	error_logger:info_report( [ io, {party, Party}, {io, IO} ] ).
+report_io( _Party, _IO ) ->
+	ok.
+	% error_logger:info_report( [ io, {party, Party}, {io, IO} ] ).
 
 
 
