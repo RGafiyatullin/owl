@@ -61,13 +61,15 @@ response_new( ReqIQ, RespBody ) ->
 	ReqType = type(ReqIQ),
 	true = ( ReqType == get orelse ReqType == set ),
 	ID = owl_xmpp_stanza:id(ReqIQ),
-	exp_node:new(
+	RespIQ0 = exp_node:new(
 		{?ns_jabber_client, <<"iq">>},
 		[{<<"id">>, ID}, {<<"type">>, <<"result">>}],
 		case RespBody of
 			undefined -> [];
 			_ -> [RespBody]
-		end).
+		end),
+	RespIQ1 = owl_xmpp_stanza:set_from(owl_xmpp_stanza:to(ReqIQ), RespIQ0),
+	_RespIQ2 = owl_xmpp_stanza:set_to(owl_xmpp_stanza:from(ReqIQ), RespIQ1).
 
 
 type2bin( T ) when in( T, ?all_iq_types ) -> atom_to_binary( T, latin1 );

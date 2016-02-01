@@ -23,14 +23,22 @@ set_id( ID, Xml ) when ID == undefined orelse is_binary( ID ) ->
 
 
 from( Xml ) ->
-	owl_xmpp_jid:b2j( exp_node_attrs:attr( <<"from">>, Xml ) ).
+	case exp_node_attrs:attr( <<"from">>, Xml ) of
+		undefined -> undefined;
+		BinJID ->
+			owl_xmpp_jid:b2j( BinJID )
+	end.
 
 set_from( From, Xml ) ->
 	FromBin = owl_xmpp_jid:j2b( From ),
 	exp_node_attrs:set_attr( <<"from">>, FromBin, Xml ).
 
 to( Xml ) ->
-	owl_xmpp_jid:b2j( exp_node_attrs:attr( <<"to">>, Xml ) ).
+	case exp_node_attrs:attr( <<"to">>, Xml ) of
+		undefined -> undefined;
+		BinJID ->
+			owl_xmpp_jid:b2j( BinJID )
+	end.
 
 set_to( To, Xml ) ->
 	ToBin = owl_xmpp_jid:j2b( To ),
