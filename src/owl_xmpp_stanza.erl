@@ -29,9 +29,14 @@ from( Xml ) ->
 			owl_xmpp_jid:b2j( BinJID )
 	end.
 
+
+set_from(undefined, Xml) ->
+	exp_node_attrs:set_attr(<<"from">>, undefined, Xml);
+
 set_from( From, Xml ) ->
 	FromBin = owl_xmpp_jid:j2b( From ),
 	exp_node_attrs:set_attr( <<"from">>, FromBin, Xml ).
+
 
 to( Xml ) ->
 	case exp_node_attrs:attr( <<"to">>, Xml ) of
@@ -39,6 +44,10 @@ to( Xml ) ->
 		BinJID ->
 			owl_xmpp_jid:b2j( BinJID )
 	end.
+
+
+set_to(undefined, Xml) ->
+	exp_node_attrs:set_attr(<<"to">>, undefined, Xml);
 
 set_to( To, Xml ) ->
 	ToBin = owl_xmpp_jid:j2b( To ),
