@@ -7,7 +7,7 @@
 -export([jid/3, jid/2, jid/1, new/3, new/2, new/1]).
 -export([node/1, host/1, resource/1]).
 -export([to_bare/1, to_host/1, set_resource/2]).
--export([is_jid/1, is_full/1, is_bare/1, is_host/1]).
+-export([is_jid/1, is_full/1, is_bare/1, is_node/1, is_host/1]).
 
 -define(jid_nil, <<>>).
 -record(jid, {
@@ -194,8 +194,7 @@ is_jid(_Jid) ->
 -spec is_full(Jid :: jid()) ->
 	Ret :: boolean().
 
-is_full(#jid{node = Node, host = Host, resource = Resource}) when
-?jid_nil =/= Node,
+is_full(#jid{host = Host, resource = Resource}) when
 ?jid_nil =/= Host,
 ?jid_nil =/= Resource ->
 	true;
@@ -207,17 +206,33 @@ is_full(_Jid) ->
 -spec is_bare(Jid :: jid()) ->
 	Ret :: boolean().
 
-is_bare(#jid{resource = ?jid_nil}) ->
+is_bare(#jid{host = Host, resource = Resource}) when
+?jid_nil =/= Host,
+?jid_nil == Resource ->
 	true;
 
 is_bare(_Jid) ->
 	false.
 
 
+-spec is_node(Jid :: jid()) ->
+	Ret :: boolean().
+
+is_node(#jid{node = Node, host = Host}) when
+?jid_nil =/= Node,
+?jid_nil =/= Host ->
+	true;
+
+is_node(_Jid) ->
+	false.
+
+
 -spec is_host(Jid :: jid()) ->
 	Ret :: boolean().
 
-is_host(#jid{node = ?jid_nil, resource = ?jid_nil}) ->
+is_host(#jid{node = Node, host = Host}) when
+?jid_nil == Node,
+?jid_nil =/= Host ->
 	true;
 
 is_host(_Jid) ->
