@@ -6,7 +6,8 @@
 		report_duration/2
 	]).
 
-report( Info, Report ) when in(Info, [trace, debug, info]) -> error_logger:info_report( [self() | Report] );
+report(UnderInfo, _Report) when in(UnderInfo, [trace, debug]) -> ok;
+report( info, Report ) -> error_logger:info_report( [self() | Report] );
 report( warning, Report ) -> error_logger:warning_report( [self() | Report] );
 report( error, Report ) -> error_logger:error_report( [self() | Report] ).
 

@@ -229,7 +229,7 @@ handle_info_socket_error( SocketError, S0) ->
 
 
 handle_info_socket_closed( S0 = #s{} ) ->
-	?log(info, [?MODULE, handle_info_socket_closed]),
+	?log(debug, [?MODULE, handle_info_socket_closed]),
 	S1 = S0 #s{ socket_activated = false },
 	do_reply_to_all_passive_receivers_and_maybe_shutdown(closed, S1).
 
